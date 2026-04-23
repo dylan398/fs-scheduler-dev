@@ -69,7 +69,7 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
 .grid-outer::-webkit-scrollbar-track{background:var(--bg-board)}
 .grid-outer::-webkit-scrollbar-thumb{background:var(--grid-dark)}
 /* Job strip also needs smooth touch scroll */
-.job-strip{background:#191d28;border-bottom:2px solid #252a38;display:flex;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;min-height:60px}
+.job-strip{background:#191d28;border-bottom:2px solid #252a38;display:flex;align-items:stretch;flex-wrap:wrap;overflow-x:visible;min-height:60px}
 .job-strip::-webkit-scrollbar{height:3px}
 .job-strip::-webkit-scrollbar-track{background:#13161e}
 .job-strip::-webkit-scrollbar-thumb{background:#2e3448}
@@ -272,7 +272,7 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
 
   /* Job strip chips — no drag on mobile, let strip scroll freely */
   .job-chip{touch-action:auto;cursor:default}
-  .job-strip{touch-action:auto}
+  .job-strip{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
 
   /* Logo tappable on mobile for sign-out */
   .logo{cursor:pointer}

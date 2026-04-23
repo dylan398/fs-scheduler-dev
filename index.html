@@ -871,6 +871,7 @@ function decodeJobRegistry(raw) {
 }
 
 function save() {
+  if(!S) return; // guard against post-logout timer firing
   _lastSaveTime = Date.now();
   const payload = JSON.parse(JSON.stringify(S));
   (payload.weeks || []).forEach(wk => {
@@ -961,6 +962,11 @@ function doLogout() {
   localStorage.removeItem('sfs_pass');
   localStorage.removeItem('sfs_mode');
   S = null;
+  // Reset presentation mode so next login starts clean
+  if(_presentMode){
+    document.body.classList.remove('present-editor','present-viewer');
+    _presentMode=null;
+  }
   DB.ref(DB_PATH).off('value');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('loading-screen').style.display = 'none';

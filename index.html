@@ -350,76 +350,86 @@ body.dark .per-day-display{background:#162035;border-color:#2e3448}
 .cswatch.none-swatch::after{content:'×';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#8a90a0;font-size:13px;line-height:1}
 
 /* ── PRESENTATION MODE ──────────────────────────────────────────────────── */
-/* Shared: both modes lock the layout to the screen */
+/* Body-level locks — all layout is handled by renderPresent() */
 body.present-editor,body.present-viewer{overflow:hidden}
-body.present-editor .main,body.present-viewer .main{
-  display:flex;flex-direction:column;overflow:hidden;
-}
-/* Each week takes exactly half the available vertical space */
-body.present-editor .week-sec,body.present-viewer .week-sec{
-  flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;
-  border-bottom:2px solid #252a38;
-}
-body.present-editor .week-bar,body.present-viewer .week-bar{
-  flex-shrink:0;padding:3px 8px;
-}
-/* Job strip compact — single row, no wrap, horizontal scroll */
-body.present-editor .job-strip,body.present-viewer .job-strip{
-  flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;min-height:0;
-  max-height:44px;align-items:center;
-}
-body.present-editor .job-chip,body.present-viewer .job-chip{
-  padding:3px 8px;min-width:100px;max-width:140px;
-}
-body.present-editor .jchip-name,body.present-viewer .jchip-name{font-size:10px}
-body.present-editor .jchip-foot,body.present-viewer .jchip-foot{display:none}
-body.present-editor .jchip-note,body.present-viewer .jchip-note{display:none}
-body.present-editor .jchip-pm,body.present-viewer .jchip-pm{display:none}
-/* Grid fills remaining space */
-body.present-editor .grid-outer,body.present-viewer .grid-outer{
-  flex:1;min-height:0;overflow:hidden;
-}
-body.present-editor .grid,body.present-viewer .grid{
-  height:100%;
-}
-/* Cells fill their row — no min-height, clip overflow */
-body.present-editor .cell,body.present-viewer .cell{
-  min-height:0!important;overflow:hidden;
-}
-/* Smaller text to pack more in */
-body.present-editor .jname,body.present-viewer .jname{font-size:11px;white-space:nowrap}
-body.present-editor .jnote,body.present-viewer .jnote{font-size:9px}
-body.present-editor .ch.day-h .dn,body.present-viewer .ch.day-h .dn{font-size:11px}
-body.present-editor .ch.day-h .dd,body.present-viewer .ch.day-h .dd{font-size:8px}
-body.present-editor .cl-num,body.present-viewer .cl-num{font-size:16px}
-body.present-editor .jremove,body.present-viewer .jremove{width:16px;height:16px;font-size:10px}
-body.present-editor .week-title,body.present-viewer .week-title{font-size:11px}
-body.present-editor .week-rev,body.present-viewer .week-rev{font-size:9px}
-/* Hide non-essential items */
-body.present-editor .notes-footer,body.present-viewer .notes-footer{display:none!important}
-body.present-editor .sat-bar,body.present-viewer .sat-bar{display:none}
-body.present-editor .rv-lbl,body.present-editor .rv-day,body.present-editor .rv-ros{display:none}
-
-/* Editor mode — keep editing controls, shrink header */
-body.present-editor .hdr{height:36px}
+body.present-editor .hdr{height:38px}
 body.present-editor .brand{display:none}
-body.present-editor .sync{display:none}
 body.present-editor #theme-btn{display:none}
 body.present-editor .settings-pop{display:none!important}
 body.present-editor #present-btn{border-color:var(--yellow);color:var(--yellow)}
-
-/* Viewer display mode — no controls at all */
 body.present-viewer .hdr{height:32px;background:#0d0f14;border-bottom:1px solid #1e2330}
 body.present-viewer .brand{display:none}
 body.present-viewer .sync{display:none}
 body.present-viewer #theme-btn{display:none}
 body.present-viewer #settings-btn{display:none}
-body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 body.present-viewer .nav-cluster{display:none}
-body.present-viewer .cell-add{display:none!important}
-body.present-viewer .jremove{display:none!important}
-body.present-viewer .sun-toggle{display:none}
-body.present-viewer .week-bar-right .week-rev .inv{font-size:10px}
+body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
+/* pres-main fills everything below the header */
+.pres-main{display:flex;flex-direction:row;gap:3px;background:#0d0f14;padding:3px;overflow:hidden}
+.pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-board);border:1px solid var(--grid-dark)}
+.pres-week.dark-mode{background:#1a1d26;border-color:#2e3448}
+.pres-bar{flex-shrink:0;background:#13161e;display:flex;align-items:center;justify-content:space-between;padding:4px 10px;border-bottom:2px solid var(--yellow)}
+.pres-bar.curr-bar{border-bottom-color:#3a4055}
+.pres-bar-left{display:flex;align-items:center;gap:8px}
+.pres-week-label{font-family:var(--font-d);font-weight:900;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;background:var(--yellow);color:#000}
+.pres-week-label.curr{background:#2e3448;color:#8a90a0}
+.pres-week-dates{font-family:var(--font-d);font-weight:700;font-size:13px;color:#e8eaf0;letter-spacing:.03em}
+.pres-bar-rev{font-family:var(--font-m);font-size:11px;color:#8a90a0;display:flex;gap:12px;align-items:center}
+.pres-bar-rev .inv{color:var(--green);font-weight:600}
+/* Job strip in present mode */
+.pres-strip{flex-shrink:0;background:#191d28;border-bottom:1px solid #252a38;display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;height:36px;gap:0}
+.pres-strip::-webkit-scrollbar{height:2px}
+.pres-strip::-webkit-scrollbar-thumb{background:#3a4055}
+.pres-chip{display:flex;align-items:center;gap:5px;padding:4px 8px;border-right:1px solid #252a38;border-left:3px solid transparent;flex-shrink:0;cursor:pointer;transition:background .1s;white-space:nowrap}
+.pres-chip:hover{background:#1e2330}
+.pres-chip-name{font-family:var(--font-d);font-weight:700;font-size:11px;color:#c8cad4}
+.pres-chip-pm{font-size:9px;color:#4a9eff;font-weight:700;margin-left:2px}
+.pres-chip-inv{font-family:var(--font-m);font-size:10px;color:#3a4055}
+.pres-chip-inv.has{color:var(--green)}
+.pres-chip-fin{font-size:9px;color:var(--orange);font-weight:700;margin-left:3px}
+/* Grid */
+.pres-grid-outer{flex:1;min-height:0;overflow:hidden}
+.pres-grid{display:grid;height:100%}
+/* Day header cells */
+.pres-dh{background:#ece8e1;border-right:1px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 3px}
+.pres-dh.today{background:#e8f0fa}
+.pres-dh.sat{background:#f0ede5}
+.pres-dh .dn{font-family:var(--font-d);font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#3a3530;line-height:1}
+.pres-dh .dd{font-family:var(--font-m);font-size:9px;color:var(--txt-muted);margin-top:1px}
+.pres-dh.today .dn{color:#1a5fa0}
+/* Corner */
+.pres-corner{background:#e4e0d8;border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark)}
+/* Crew label cells */
+.pres-cl{background:var(--crew-col);border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:2px;overflow:hidden}
+.pres-cl:hover{background:#dedad2}
+.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:22px;color:#3a3530;line-height:1}
+.pres-cl-names{font-size:8px;color:var(--txt-muted);text-align:center;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px}
+/* Job cells */
+.pres-cell{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);background:var(--bg-cell);padding:2px;overflow:hidden;position:relative}
+.pres-cell.today{background:#f8fbff}
+.pres-cell.sat{background:#faf8f4}
+/* Job cards in present mode */
+.pres-jcard{border-left:3px solid #c4bfb6;background:#f5f3ee;padding:2px 4px 2px 5px;margin-bottom:2px;overflow:hidden;position:relative}
+.pres-jcard.night{background:#1e2330}
+.pres-jname{font-family:var(--font-d);font-weight:700;font-size:11px;color:var(--txt);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px}
+.pres-jnote{font-size:9px;color:var(--txt-dim);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pres-jremove{position:absolute;top:1px;right:1px;background:rgba(0,0,0,.08);border:none;color:#aaa;width:13px;height:13px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}
+.pres-jremove:hover{color:var(--red)}
+.pres-add{display:flex;align-items:center;justify-content:center;color:#d0ccc4;font-size:18px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;height:18px}
+.pres-add:hover{color:#9a9590}
+/* Dark mode overrides for present grid */
+body.dark .pres-week{background:#1a1d26;border-color:#2e3448}
+body.dark .pres-dh{background:#252a38;border-color:#3a4055;color:#8a90a0}
+body.dark .pres-dh .dn{color:#a0a8c0}
+body.dark .pres-dh.today{background:#162035}
+body.dark .pres-corner{background:#1e2330}
+body.dark .pres-cl{background:#252a38;border-color:#3a4055}
+body.dark .pres-cl-num{color:#a0a8c0}
+body.dark .pres-cell{background:#1e2330;border-color:#2e3448}
+body.dark .pres-cell.today{background:#162035}
+body.dark .pres-jcard{background:#252a38}
+body.dark .pres-jname{color:#c8cad4}
+body.dark .pres-jnote{color:#6a7080}
 
 /* ── PRINT MODAL ──────────────────────────────────────────────────────── */
 #print-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center}
@@ -1158,8 +1168,10 @@ function positionModal(modalEl,e){
 let _pendingSave = false;
 
 function render(){
+  if(_presentMode){ renderPresent(); updateNav(); return; }
   const main=document.getElementById('main');
   main.innerHTML='';
+  main.style.cssText='';
   while(S.weeks.length<=S.viewIdx+1)addNextWeek();
   // Next week ON TOP, This week on bottom
   main.appendChild(buildWeek(S.viewIdx+1,'Next Week',true));
@@ -1171,6 +1183,157 @@ function render(){
   document.getElementById('notes-ta').addEventListener('input',function(){if(!VIEWER_MODE){S.notes=this.value;save();}else{this.value=S.notes;}});
   if(_pendingSave){_pendingSave=false;setTimeout(save,200);}
   updateNav();
+}
+
+// ── PRESENTATION RENDERER ────────────────────────────────────────────────
+// Completely custom side-by-side layout. Does not use the normal week/grid DOM at all.
+function renderPresent(){
+  const main=document.getElementById('main');
+  main.innerHTML='';
+  // Full-height flex row container
+  main.style.cssText='display:flex;flex-direction:row;gap:4px;padding:4px;overflow:hidden;background:#0d0f14;height:100%;box-sizing:border-box';
+
+  while(S.weeks.length<=S.viewIdx+1)addNextWeek();
+  syncJobSummary(S.viewIdx);
+  syncJobSummary(S.viewIdx+1);
+
+  // NEXT WEEK left, THIS WEEK right
+  main.appendChild(buildPresentWeek(S.viewIdx+1, true));
+  main.appendChild(buildPresentWeek(S.viewIdx, false));
+
+  if(_pendingSave){_pendingSave=false;setTimeout(save,200);}
+}
+
+function buildPresentWeek(wi, isNext){
+  const wk=S.weeks[wi];
+  const nd=wk.hasSunday?7:6;
+  ensureA(wi);
+  const isDark=document.body.classList.contains('dark');
+  const curIdx=currentWeekIdx(S.weeks);
+  const isThisWeek=(wi===curIdx), isNextWeek=(wi===curIdx+1);
+  const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
+
+  // ── Week panel ──────────────────────────────────────────────────────────
+  const panel=document.createElement('div');
+  panel.className='pres-week'+(isDark?' dark-mode':'');
+  panel.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;border-radius:2px';
+
+  // ── Header bar ──────────────────────────────────────────────────────────
+  const wInv=calcWeekInv(wk), wSched=calcWeekSched(wk,nd);
+  const tgt=wk.target||0;
+  const schedColor=tgt>0?(wSched>=tgt?'#2db87a':wSched>=tgt*.75?'#d4a017':'#e05252'):'#8a90a0';
+  const labelHtml=isNextWeek
+    ?`<span class="pres-week-label">NEXT WEEK</span>`
+    :isThisWeek?`<span class="pres-week-label curr">THIS WEEK</span>`:'';
+  const bar=document.createElement('div');
+  bar.className='pres-bar'+(isThisWeek?' curr-bar':'');
+  bar.innerHTML=`<div class="pres-bar-left">${labelHtml}<span class="pres-week-dates">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div>`
+    +`<div class="pres-bar-rev"><span style="color:${schedColor}">$${fmt(wSched)}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>`;
+  panel.appendChild(bar);
+
+  // ── Job strip ───────────────────────────────────────────────────────────
+  const jobs=Object.keys(wk.jobSummary||{});
+  if(jobs.length){
+    const strip=document.createElement('div');
+    strip.className='pres-strip';
+    strip.innerHTML=`<span style="font-family:var(--font-d);font-weight:800;font-size:9px;letter-spacing:.1em;color:#3a4055;padding:0 8px;flex-shrink:0">JOBS</span>`;
+    jobs.forEach(jobName=>{
+      const d=wk.jobSummary[jobName];
+      const jc=(S.jobColors||{})[jobName];
+      const pm=d.pm||(S.jobRegistry[jobName]?.pm)||'';
+      const chip=document.createElement('div');
+      chip.className='pres-chip';
+      if(jc) chip.style.borderLeftColor=jc;
+      chip.innerHTML=`<span class="pres-chip-name">${esc(jobName)}</span>`
+        +(pm?`<span class="pres-chip-pm">${esc(pm)}</span>`:'')
+        +`<span class="pres-chip-inv${d.invoiceAmt?' has':''}">${d.invoiceAmt?'$'+fmt(d.invoiceAmt):''}</span>`
+        +(d.finishing?`<span class="pres-chip-fin">★</span>`:'');
+      chip.addEventListener('click',e=>{ if(!VIEWER_MODE) openJobSummary(wi,jobName,e); });
+      strip.appendChild(chip);
+    });
+    panel.appendChild(strip);
+  }
+
+  // ── Grid ────────────────────────────────────────────────────────────────
+  const gridOuter=document.createElement('div');
+  gridOuter.className='pres-grid-outer';
+
+  const grid=document.createElement('div');
+  grid.className='pres-grid';
+  // Columns: crew label | day1..dayN
+  // Rows: day header | crew1..crewN  — all 1fr so they fill evenly
+  const crewColW='52px';
+  grid.style.gridTemplateColumns=`${crewColW} repeat(${nd},1fr)`;
+  grid.style.gridTemplateRows=`auto repeat(${S.numCrews},1fr)`;
+  grid.style.height='100%';
+
+  // Corner cell
+  const corner=document.createElement('div');
+  corner.className='pres-corner';
+  grid.appendChild(corner);
+
+  // Day header cells
+  for(let di=0;di<nd;di++){
+    const isSat=di===5,isSun=di===6;
+    const isToday=isThisWeek&&wk.dates[di]===todayStr;
+    const dh=document.createElement('div');
+    dh.className='pres-dh'+(isToday?' today':'')+(isSat||isSun?' sat':'');
+    dh.innerHTML=`<div class="dn">${DAY_NAMES[di]}</div><div class="dd">${wk.dates[di]||''}</div>`;
+    grid.appendChild(dh);
+  }
+
+  // Crew rows
+  for(let ci=0;ci<S.numCrews;ci++){
+    const crew=S.crews[ci]||{num:ci+1,members:[]};
+
+    // Crew label cell
+    const cl=document.createElement('div');
+    cl.className='pres-cl';
+    cl.innerHTML=`<div class="pres-cl-num">${crew.num}</div><div class="pres-cl-names">${crew.members.slice(0,4).join('<br>')}</div>`;
+    if(!VIEWER_MODE) cl.addEventListener('click',e=>openRoster(ci,e));
+    grid.appendChild(cl);
+
+    // Day cells
+    for(let di=0;di<nd;di++){
+      const isSat=di===5,isSun=di===6;
+      const isToday=isThisWeek&&wk.dates[di]===todayStr;
+      const cell=document.createElement('div');
+      cell.className='pres-cell'+(isToday?' today':'')+(isSat||isSun?' sat':'');
+
+      const jobs=(wk.a[ci]&&wk.a[ci][di])||[];
+      jobs.forEach((j,ji)=>{
+        if(!j||!j.job) return;
+        const jc=(S.jobColors||{})[j.job];
+        const card=document.createElement('div');
+        card.className='pres-jcard'+(j.night?' night':'');
+        if(jc) card.style.borderLeftColor=jc;
+        card.innerHTML=`<div class="pres-jname">${j.night?'🌙 ':''}${esc(j.job)}</div>`
+          +(j.note?`<div class="pres-jnote">${esc(j.note)}</div>`:'');
+        if(!VIEWER_MODE){
+          card.addEventListener('click',e=>{e.stopPropagation();openEditJob(wi,di,ci,ji,e);});
+          const rm=document.createElement('button');
+          rm.className='pres-jremove';rm.innerHTML='×';rm.title='Remove';
+          rm.addEventListener('click',e=>{e.stopPropagation();S.weeks[wi].a[ci][di].splice(ji,1);save();renderPresent();});
+          card.appendChild(rm);
+        } else {
+          card.addEventListener('click',e=>{e.stopPropagation();openViewerInfo(j,e);});
+        }
+        cell.appendChild(card);
+      });
+
+      if(!VIEWER_MODE){
+        const add=document.createElement('div');
+        add.className='pres-add';add.textContent='+';add.title='Add job';
+        add.addEventListener('click',e=>{e.stopPropagation();openEditJob(wi,di,ci,-1,e);});
+        cell.appendChild(add);
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  gridOuter.appendChild(grid);
+  panel.appendChild(gridOuter);
+  return panel;
 }
 
 function addNextWeek(){
@@ -1210,11 +1373,6 @@ function buildWeek(wi,label,isNext){
   const rw=isMobile?0:ROSTER_W;
   const dayMin=isMobile?'80px':'1fr';
   grid.style.gridTemplateColumns=rw>0?`${cw}px repeat(${nd},${dayMin}) ${rw}px`:`${cw}px repeat(${nd},${dayMin})`;
-  // In present mode: set explicit rows so grid fills the outer height — header row auto, each crew row 1fr
-  if(_presentMode){
-    grid.style.gridTemplateRows=`auto repeat(${S.numCrews},1fr)`;
-    grid.style.height='100%';
-  }
   grid.appendChild(mkEl('div','ch corner'));
   const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
   for(let di=0;di<nd;di++){

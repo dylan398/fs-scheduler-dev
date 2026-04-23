@@ -422,6 +422,15 @@ body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 .pres-jfoot{display:flex;align-items:center;gap:5px;margin-top:4px;flex-shrink:0}
 .pres-jstat{font-family:var(--font-d);font-weight:700;font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:1px 5px;border-radius:1px}
 .pres-jnight{font-size:10px;line-height:1}
+/* Card size variants for cells with multiple jobs */
+.pres-jcard-md{padding:4px 6px 4px 8px}
+.pres-jcard-md .pres-jname{font-size:13px;-webkit-line-clamp:1}
+.pres-jcard-md .pres-jnote{font-size:10px}
+.pres-jcard-md .pres-jfoot{margin-top:2px}
+.pres-jcard-sm{padding:3px 5px 3px 7px}
+.pres-jcard-sm .pres-jname{font-size:12px;-webkit-line-clamp:1}
+.pres-jcard-sm .pres-jnote{display:none}
+.pres-jcard-sm .pres-jfoot{margin-top:1px}
 /* Remove button */
 .pres-jremove{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.1);border:none;color:#aaa;width:15px;height:15px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;border-radius:1px}
 .pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.15)}
@@ -1316,11 +1325,14 @@ function buildPresentWeek(wi, isNext){
       cell.dataset.wi=wi; cell.dataset.di=di; cell.dataset.ci=ci;
 
       const jobs=(wk.a[ci]&&wk.a[ci][di])||[];
+      const jobCount=jobs.length;
       jobs.forEach((j,ji)=>{
         if(!j||!j.job) return;
         const jc=(S.jobColors||{})[j.job];
         const card=document.createElement('div');
-        card.className='pres-jcard'+(j.night?' night':'');
+        // Scale down card density based on how many jobs share the cell
+        const sizeClass=jobCount===1?'':jobCount===2?' pres-jcard-md':' pres-jcard-sm';
+        card.className='pres-jcard'+sizeClass+(j.night?' night':'');
         // Thick left border + subtle background tint from job color
         if(jc){
           card.style.borderLeftColor=jc;

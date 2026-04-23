@@ -335,6 +335,9 @@ body.dark .per-day-display{background:#162035;border-color:#2e3448}
 /* ── JOB COLOR DOT ON CHIP ──────────────────────────────────────────────── */
 .jchip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
 
+/* ── CHIP PM ─────────────────────────────────────────────────────────────── */
+.jchip-pm{font-size:9px;color:#4a9eff;font-weight:700;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+
 /* ── CHIP JOB NOTE ──────────────────────────────────────────────────────── */
 .jchip-note{font-size:10px;color:#555c70;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 
@@ -345,6 +348,36 @@ body.dark .per-day-display{background:#162035;border-color:#2e3448}
 .cswatch.selected{border-color:#fff;box-shadow:0 0 0 2px #555c70}
 .cswatch.none-swatch{background:#3a4055;position:relative}
 .cswatch.none-swatch::after{content:'×';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#8a90a0;font-size:13px;line-height:1}
+
+/* ── PRESENTATION MODE ──────────────────────────────────────────────────── */
+/* Editor meeting mode — stripped header, both weeks big */
+body.present-editor .hdr{height:38px}
+body.present-editor .brand{display:none}
+body.present-editor .sync{display:none}
+body.present-editor #theme-btn{display:none}
+body.present-editor #print-modal{display:none}
+body.present-editor .settings-pop{display:none!important}
+body.present-editor #present-btn{border-color:var(--yellow);color:var(--yellow)}
+body.present-editor .hdr-gap{flex:0.2}
+/* Viewer display mode — minimal chrome, no edit controls, large view */
+body.present-viewer .hdr{height:34px;background:#0d0f14;border-bottom:1px solid #252a38}
+body.present-viewer .brand{display:none}
+body.present-viewer .sync{display:none}
+body.present-viewer #theme-btn{display:none}
+body.present-viewer #settings-btn{display:none}
+body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
+body.present-viewer .nav-cluster{display:none}
+body.present-viewer .cell-add{display:none!important}
+body.present-viewer .jremove{display:none!important}
+body.present-viewer .sun-toggle{display:none}
+body.present-viewer .hdr-gap{flex:1}
+body.present-viewer .notes-footer{display:none}
+body.present-viewer .week-rev .inv{font-size:13px}
+body.present-viewer .jname{font-size:14px}
+body.present-viewer .jnote{font-size:11px}
+body.present-viewer .ch.day-h .dn{font-size:16px}
+body.present-viewer .cl-num{font-size:26px}
+body.present-viewer .cell{min-height:90px}
 
 /* ── PRINT MODAL ──────────────────────────────────────────────────────── */
 #print-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center}
@@ -458,6 +491,7 @@ body.viewer .jchip-inv{display:none!important}
   <div class="sync"><div class="sync-dot"></div><span id="sync-lbl">Saved</span></div>
   <button class="hdr-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">☀</button>
   <button class="hdr-btn" onclick="openPrintModal()" title="Print schedule">⎙</button>
+  <button class="hdr-btn" id="present-btn" onclick="togglePresent()" title="Presentation mode (F11 for fullscreen)">⛶</button>
   <div id="mode-badge" style="font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#3a4055;margin-left:6px;cursor:pointer" onclick="doLogout()" title="Click to sign out"></div>
 </header>
 
@@ -510,6 +544,18 @@ body.viewer .jchip-inv{display:none!important}
     </div>
     <div class="mbody">
       <div id="sum-jobname" style="font-family:var(--font-d);font-weight:800;font-size:17px;color:var(--txt);padding-bottom:10px;border-bottom:1px solid #e8e5de"></div>
+      <div>
+        <div class="flbl" style="display:flex;align-items:center;justify-content:space-between">
+          Project Manager
+          <div style="display:flex;gap:6px">
+            <button onclick="addPM()" style="background:transparent;border:1px solid #3a4055;color:#8a90a0;padding:1px 7px;cursor:pointer;font-size:12px;font-family:var(--font-d);font-weight:700" title="Add project manager">+</button>
+            <button onclick="removePM()" style="background:transparent;border:1px solid #3a4055;color:#8a90a0;padding:1px 7px;cursor:pointer;font-size:12px;font-family:var(--font-d);font-weight:700" title="Remove selected">🗑</button>
+          </div>
+        </div>
+        <select class="finput" id="s-pm" style="cursor:pointer">
+          <option value="">— Unassigned —</option>
+        </select>
+      </div>
       <div><div class="flbl">Job Note <span class="flbl-hint">shows on strip chip</span></div>
         <input class="finput" id="s-note" type="text" placeholder="e.g. Waiting on PO, Material delivery Tue…">
       </div>
@@ -591,7 +637,7 @@ function initData(){
   const nextMonDate=new Date(mon);nextMonDate.setDate(mon.getDate()+7);
   const nextMonStr=MN[nextMonDate.getMonth()]+' '+nextMonDate.getDate();
   const w1=mkWeek(wkDates(nextMonStr));
-  return{numCrews:5,crews:[{num:1,members:[]},{num:2,members:[]},{num:3,members:[]},{num:4,members:[]},{num:5,members:[]}],weeks:[w0,w1],viewIdx:0,notes:'',jobColors:{},jobRegistry:{}};
+  return{numCrews:5,crews:[{num:1,members:[]},{num:2,members:[]},{num:3,members:[]},{num:4,members:[]},{num:5,members:[]}],weeks:[w0,w1],viewIdx:0,notes:'',jobColors:{},jobRegistry:{},projectManagers:['James Thetford','Tyler Petty']};
 }
 
 // ── ENVIRONMENT ──────────────────────────────────────────────────────────
@@ -679,17 +725,46 @@ function migrate(d) {
   });
 
   if(d.viewIdx === undefined) d.viewIdx = 0;
+  // viewIdx is local — restore from localStorage and anchor to current week
+  d.viewIdx = getLocalViewIdx(d);
   if(!d.notes) d.notes = '';
   if(!d.jobColors) d.jobColors = {};
   else d.jobColors = decodeJobColors(d.jobColors);
   if(!d.jobRegistry) d.jobRegistry = {};
   else d.jobRegistry = decodeJobRegistry(d.jobRegistry);
   d.weeks.forEach(wk => { if(wk && wk.target === undefined) wk.target = 0; });
+  if(!d.projectManagers) d.projectManagers=['James Thetford','Tyler Petty'];
+  else d.projectManagers=fbArr(d.projectManagers,[]).filter(Boolean);
   delete d._sid;
   return d;
 }
 
-// ── Firebase key safety ──────────────────────────────────────────────────
+// ── LOCAL VIEW INDEX ─────────────────────────────────────────────────────
+// viewIdx is per-device. On first load anchor to the current real week.
+function currentWeekIdx(weeks) {
+  if(!weeks||!weeks.length) return 0;
+  const todayStr = MN[new Date().getMonth()]+' '+new Date().getDate();
+  // Find the week that contains today (Monday = first date)
+  for(let i=0;i<weeks.length;i++){
+    const wk=weeks[i]; if(!wk||!wk.dates||!wk.dates.length) continue;
+    // Check if today falls within this week
+    const d0=new Date(wk.dates[0]+' '+new Date().getFullYear());
+    const nd=wk.hasSunday?7:6;
+    const d1=new Date(wk.dates[nd-1]+' '+new Date().getFullYear());
+    const today=new Date();
+    today.setHours(0,0,0,0);d0.setHours(0,0,0,0);d1.setHours(0,0,0,0);
+    if(today>=d0&&today<=d1) return i;
+  }
+  return 0;
+}
+function getLocalViewIdx(d) {
+  const saved = parseInt(localStorage.getItem('sfs_viewIdx'));
+  // If we have a saved idx in range, use it; otherwise anchor to current week
+  if(!isNaN(saved)&&saved>=0&&d.weeks&&saved<d.weeks.length-1) return saved;
+  return currentWeekIdx(d.weeks);
+}
+
+
 // Firebase rejects keys with . # $ / [ ] — job names can contain these.
 // Solution: store jobSummary as an array [{__n: jobName, ...props}] in Firebase,
 // and convert back to {jobName: props} in memory.
@@ -699,7 +774,8 @@ function encodeJobSummary(obj) {
     finishing: !!v.finishing,
     invoiceAmt: v.invoiceAmt || 0,
     totalDays: v.totalDays || 0,
-    note: v.note || ''
+    note: v.note || '',
+    pm: v.pm || ''
   }));
 }
 function decodeJobSummary(raw) {
@@ -712,7 +788,8 @@ function decodeJobSummary(raw) {
         finishing: !!item.finishing,
         invoiceAmt: item.invoiceAmt || 0,
         totalDays: item.totalDays || 0,
-        note: item.note || ''
+        note: item.note || '',
+        pm: item.pm || ''
       };
     }
   });
@@ -731,13 +808,13 @@ function decodeJobColors(raw) {
 }
 // jobRegistry: global job data by name {jobName: {invoiceAmt, totalDays, note}}
 function encodeJobRegistry(obj) {
-  return Object.entries(obj || {}).map(([name, v]) => ({__n: name, invoiceAmt: v.invoiceAmt||0, totalDays: v.totalDays||0, note: v.note||''}));
+  return Object.entries(obj || {}).map(([name, v]) => ({__n: name, invoiceAmt: v.invoiceAmt||0, totalDays: v.totalDays||0, note: v.note||'', pm: v.pm||''}));
 }
 function decodeJobRegistry(raw) {
   if(!raw) return {};
   const list = fbArr(raw, []).filter(Boolean);
   const obj = {};
-  list.forEach(item => { if(item && item.__n) obj[item.__n] = {invoiceAmt: item.invoiceAmt||0, totalDays: item.totalDays||0, note: item.note||''}; });
+  list.forEach(item => { if(item && item.__n) obj[item.__n] = {invoiceAmt: item.invoiceAmt||0, totalDays: item.totalDays||0, note: item.note||'', pm: item.pm||''}; });
   return obj;
 }
 
@@ -749,11 +826,15 @@ function save() {
   });
   if(payload.jobColors) payload.jobColors = encodeJobColors(payload.jobColors);
   if(payload.jobRegistry) payload.jobRegistry = encodeJobRegistry(payload.jobRegistry);
+  // viewIdx is local-only — never sync it to Firebase
+  delete payload.viewIdx;
   payload._sid = MY_SESSION;
   DB.ref(DB_PATH).set(payload)
     .then(() => setSync('Saved'))
     .catch(e => { console.error('Firebase save error:', e); setSync('⚠ Save failed'); });
   setSync('Saving…');
+  // Persist viewIdx locally
+  localStorage.setItem('sfs_viewIdx', S.viewIdx);
 }
 
 function initFirebase() {
@@ -1068,7 +1149,16 @@ function buildWeek(wi,label,isNext){
   const sec=document.createElement('div');
   sec.className='week-sec'+(isNext?' next-week':'');
   const bar=mkEl('div','week-bar');
-  bar.innerHTML=`<div style="display:flex;align-items:center"><span class="week-tag ${isNext?'next':'curr'}">${label}</span><span class="week-title">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div><div class="week-bar-right"><div class="week-rev ${schedClass}"><span>Scheduled: <strong>$${fmt(wSched)}</strong>${tgtHtml}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div><button class="sun-toggle${wk.hasSunday?' on':''}" onclick="toggleSunday(${wi})">${wk.hasSunday?'− Sun':'+ Sun'}</button></div>`;
+
+  // Only show THIS WEEK / NEXT WEEK labels when they're actually the current/next week
+  const curIdx=currentWeekIdx(S.weeks);
+  const showLabel=(wi===curIdx||wi===curIdx+1);
+  const realLabel=wi===curIdx?'THIS WEEK':wi===curIdx+1?'NEXT WEEK':null;
+  const tagHtml=showLabel&&realLabel
+    ?`<span class="week-tag ${wi===curIdx+1?'next':'curr'}">${realLabel}</span>`
+    :'';
+
+  bar.innerHTML=`<div style="display:flex;align-items:center">${tagHtml}<span class="week-title">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div><div class="week-bar-right"><div class="week-rev ${schedClass}"><span>Scheduled: <strong>$${fmt(wSched)}</strong>${tgtHtml}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div><button class="sun-toggle${wk.hasSunday?' on':''}" onclick="toggleSunday(${wi})">${wk.hasSunday?'− Sun':'+ Sun'}</button></div>`;
   sec.appendChild(bar);
   sec.appendChild(buildJobStrip(wi));
   const gridOuter=mkEl('div','grid-outer');
@@ -1163,7 +1253,9 @@ function buildJobStrip(wi){
     const dotHtml=jobColor?`<span class="jchip-dot" style="background:${jobColor}"></span>`:'';
     const chip=mkEl('div',`job-chip${d.finishing?' is-finishing':''}${hasInv?' has-invoice':''}`);
     if(jobColor) chip.style.borderLeftColor=jobColor;
-    chip.innerHTML=`<div class="jchip-name">${dotHtml}${dotHtml?' ':''}${esc(jobName)}</div>${d.note?`<div class="jchip-note">${esc(d.note)}</div>`:''}<div class="jchip-foot">${d.finishing?'<span class="jchip-fin">Finishing</span>':''}<span class="jchip-inv${hasInv?' has-val':''}">${hasInv?'$'+fmt(d.invoiceAmt):'+ Invoice'}</span></div>`;
+    const pmVal=d.pm||(S.jobRegistry[jobName]?.pm)||'';
+    const pmHtml=pmVal?`<div class="jchip-pm">${esc(pmVal)}</div>`:'';
+    chip.innerHTML=`<div class="jchip-name">${dotHtml}${dotHtml?' ':''}${esc(jobName)}</div>${pmHtml}${d.note?`<div class="jchip-note">${esc(d.note)}</div>`:''}<div class="jchip-foot">${d.finishing?'<span class="jchip-fin">Finishing</span>':''}<span class="jchip-inv${hasInv?' has-val':''}">${hasInv?'$'+fmt(d.invoiceAmt):'+ Invoice'}</span></div>`;
     attachChipDrag(chip,wi,jobName);
     strip.appendChild(chip);
   });
@@ -1263,15 +1355,51 @@ function buildColorSwatches(currentColor) {
   });
 }
 
+function buildPMDropdown(selectedPM){
+  const sel=document.getElementById('s-pm');
+  sel.innerHTML='<option value="">— Unassigned —</option>';
+  (S.projectManagers||[]).forEach(pm=>{
+    const opt=document.createElement('option');
+    opt.value=pm;opt.textContent=pm;
+    if(pm===selectedPM)opt.selected=true;
+    sel.appendChild(opt);
+  });
+}
+function addPM(){
+  const name=prompt('New Project Manager name:');
+  if(!name||!name.trim())return;
+  const n=name.trim();
+  if(!S.projectManagers)S.projectManagers=[];
+  if(S.projectManagers.includes(n)){alert(n+' already exists.');return;}
+  S.projectManagers.push(n);
+  buildPMDropdown(document.getElementById('s-pm').value);
+  save();
+}
+function removePM(){
+  const sel=document.getElementById('s-pm');
+  const pm=sel.value;
+  if(!pm){alert('Select a project manager to remove.');return;}
+  if(!confirm(`Remove "${pm}" from the project manager list?`))return;
+  S.projectManagers=(S.projectManagers||[]).filter(p=>p!==pm);
+  // Clear from all jobSummaries and registry
+  S.weeks.forEach(wk=>{if(!wk.jobSummary)return;Object.values(wk.jobSummary).forEach(d=>{if(d.pm===pm)d.pm='';});});
+  Object.values(S.jobRegistry||{}).forEach(d=>{if(d.pm===pm)d.pm='';});
+  buildPMDropdown('');
+  save();
+}
+
 function openJobSummary(wi,jobName,e){
   ASJ={wi,jobName};
-  const d=S.weeks[wi].jobSummary[jobName]||{finishing:false,invoiceAmt:0,totalDays:0,note:''};
+  const d=S.weeks[wi].jobSummary[jobName]||{finishing:false,invoiceAmt:0,totalDays:0,note:'',pm:''};
+  // Inherit PM from registry if not set on this week
+  const pm=d.pm||(S.jobRegistry[jobName]?.pm)||'';
   document.getElementById('sum-jobname').textContent=jobName;
   document.getElementById('s-note').value=d.note||'';
   document.getElementById('s-inv').value=d.invoiceAmt||'';
   document.getElementById('s-days').value=d.totalDays||'';
   document.getElementById('s-finish').checked=!!d.finishing;
   buildColorSwatches((S.jobColors||{})[jobName]||null);
+  buildPMDropdown(pm);
   updatePerDay();
   document.getElementById('summary-ov').classList.remove('hidden');
   positionModal(document.getElementById('summary-modal'),e);
@@ -1292,17 +1420,52 @@ function saveSummary(){
   const inv=parseFloat(document.getElementById('s-inv').value)||0;
   const days=parseInt(document.getElementById('s-days').value)||0;
   const note=document.getElementById('s-note').value.trim();
-  S.weeks[wi].jobSummary[jobName]={finishing:document.getElementById('s-finish').checked,invoiceAmt:inv,totalDays:days,note};
-  // Update global registry so same job name in other weeks inherits this data
-  S.jobRegistry[jobName]={invoiceAmt:inv,totalDays:days,note};
+  const finishing=document.getElementById('s-finish').checked;
+  const pm=document.getElementById('s-pm').value||'';
+
+  // Check if invoice/days actually changed
+  const old=S.weeks[wi].jobSummary[jobName]||{};
+  const amountsChanged=(inv!=(old.invoiceAmt||0))||(days!=(old.totalDays||0));
+
+  S.weeks[wi].jobSummary[jobName]={finishing,invoiceAmt:inv,totalDays:days,note,pm};
+
+  // Update global registry — note is week-specific, inv/days/pm are global
+  S.jobRegistry[jobName]={invoiceAmt:inv,totalDays:days,note:S.jobRegistry[jobName]?.note||note,pm};
+
   // Save color
   if(!S.jobColors)S.jobColors={};
   if(_selectedColor) S.jobColors[jobName]=_selectedColor;
   else delete S.jobColors[jobName];
-  if(inv>0&&days>0){
+
+  if(amountsChanged&&inv>0&&days>0){
     const perDay=Math.round(inv/days);
+    // Distribute in this week
     S.weeks[wi].a.forEach(cr=>cr.forEach(day=>(day||[]).forEach(j=>{if(j.job===jobName)j.val=perDay;})));
+    // 4. Propagate inv/days to all other weeks that have this job, and redistribute there too
+    S.weeks.forEach((wk,i)=>{
+      if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
+      wk.jobSummary[jobName].invoiceAmt=inv;
+      wk.jobSummary[jobName].totalDays=days;
+      if(pm) wk.jobSummary[jobName].pm=pm;
+      wk.a.forEach(cr=>cr.forEach(day=>(day||[]).forEach(j=>{if(j.job===jobName)j.val=perDay;})));
+    });
+  }else if(amountsChanged&&(inv===0||days===0)){
+    // Amounts cleared — propagate zero to other weeks
+    S.weeks.forEach((wk,i)=>{
+      if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
+      wk.jobSummary[jobName].invoiceAmt=inv;
+      wk.jobSummary[jobName].totalDays=days;
+    });
   }
+
+  // Propagate PM change to all weeks even if amounts didn't change
+  if(!amountsChanged&&pm!=(old.pm||'')){
+    S.weeks.forEach((wk,i)=>{
+      if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
+      wk.jobSummary[jobName].pm=pm;
+    });
+  }
+
   save();render();closeSummary();
 }
 
@@ -1335,7 +1498,7 @@ function saveRoster(){
 // ── SUNDAY / CREWS / NAV ─────────────────────────────────────────────────
 function toggleSunday(wi){const wk=S.weeks[wi];wk.hasSunday=!wk.hasSunday;if(wk.hasSunday){if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});}else{wk.dates=wk.dates.slice(0,6);wk.a.forEach(cr=>cr.splice(6,1));}save();render();}
 function changeCrews(delta){const n=Math.max(1,Math.min(12,S.numCrews+delta));if(n===S.numCrews)return;if(n>S.numCrews){for(let i=S.numCrews;i<n;i++)S.crews.push({num:i+1,members:[]});S.weeks.forEach(wk=>{const nd=wk.hasSunday?7:6;for(let i=S.numCrews;i<n;i++)wk.a.push(Array.from({length:nd},()=>[]));});}else{S.crews=S.crews.slice(0,n);S.weeks.forEach(wk=>{wk.a=wk.a.slice(0,n);});}S.numCrews=n;document.getElementById('crew-count-lbl').textContent=n;document.getElementById('sp-crew-val').textContent=n;save();render();}
-function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();if(!VIEWER_MODE)save();render();}
+function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}
 function updateNav(){document.getElementById('nav-prev').disabled=S.viewIdx===0;const w0=S.weeks[S.viewIdx],w1=S.weeks[S.viewIdx+1]||w0;const nd1=w1.hasSunday?7:6;document.getElementById('nav-range').textContent=`${w0.dates[0]} – ${w1.dates[nd1-1]||w1.dates[5]}`;document.getElementById('crew-count-lbl').textContent=S.numCrews;document.getElementById('sp-crew-val').textContent=S.numCrews;}
 
 // ── ENSURE DIMS ───────────────────────────────────────────────────────────
@@ -1493,7 +1656,41 @@ function doPrint(which){
     setTimeout(()=>{ if(iframe.parentNode) document.body.removeChild(iframe); },1000);
   },400);
 }
+// ── PRESENTATION MODE ────────────────────────────────────────────────────
+let _presentMode = null; // null | 'editor' | 'viewer'
+function togglePresent(){
+  if(_presentMode){
+    // Exit presentation mode
+    document.body.classList.remove('present-editor','present-viewer');
+    _presentMode=null;
+    document.getElementById('present-btn').title='Presentation mode (F11 for fullscreen)';
+    render();
+    return;
+  }
+  // Enter presentation mode
+  _presentMode=VIEWER_MODE?'viewer':'editor';
+  document.body.classList.add('present-'+_presentMode);
+  document.getElementById('present-btn').title='Exit presentation mode';
+  // Attempt fullscreen
+  if(document.documentElement.requestFullscreen){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }
+  render();
+}
+document.addEventListener('fullscreenchange',()=>{
+  // If user exits fullscreen (Esc), also exit present mode if active
+  if(!document.fullscreenElement&&_presentMode){
+    document.body.classList.remove('present-editor','present-viewer');
+    _presentMode=null;
+    document.getElementById('present-btn').title='Presentation mode (F11 for fullscreen)';
+    render();
+  }
+});
 document.addEventListener('keydown',e=>{
+  if(e.key==='F11'){
+    e.preventDefault();
+    togglePresent();
+  }
   if(e.key==='Escape'){closeEdit();closeSummary();closeRoster();closePrintModal();closeViewerInfo();}
 });
 // Re-render on resize/rotation so mobile vs desktop layout switches correctly

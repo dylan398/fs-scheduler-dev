@@ -350,17 +350,66 @@ body.dark .per-day-display{background:#162035;border-color:#2e3448}
 .cswatch.none-swatch::after{content:'×';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#8a90a0;font-size:13px;line-height:1}
 
 /* ── PRESENTATION MODE ──────────────────────────────────────────────────── */
-/* Editor meeting mode — stripped header, both weeks big */
-body.present-editor .hdr{height:38px}
+/* Shared: both modes lock the layout to the screen */
+body.present-editor,body.present-viewer{overflow:hidden}
+body.present-editor .main,body.present-viewer .main{
+  display:flex;flex-direction:column;overflow:hidden;
+}
+/* Each week takes exactly half the available vertical space */
+body.present-editor .week-sec,body.present-viewer .week-sec{
+  flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+  border-bottom:2px solid #252a38;
+}
+body.present-editor .week-bar,body.present-viewer .week-bar{
+  flex-shrink:0;padding:3px 8px;
+}
+/* Job strip compact — single row, no wrap, horizontal scroll */
+body.present-editor .job-strip,body.present-viewer .job-strip{
+  flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;min-height:0;
+  max-height:44px;align-items:center;
+}
+body.present-editor .job-chip,body.present-viewer .job-chip{
+  padding:3px 8px;min-width:100px;max-width:140px;
+}
+body.present-editor .jchip-name,body.present-viewer .jchip-name{font-size:10px}
+body.present-editor .jchip-foot,body.present-viewer .jchip-foot{display:none}
+body.present-editor .jchip-note,body.present-viewer .jchip-note{display:none}
+body.present-editor .jchip-pm,body.present-viewer .jchip-pm{display:none}
+/* Grid fills remaining space */
+body.present-editor .grid-outer,body.present-viewer .grid-outer{
+  flex:1;min-height:0;overflow:hidden;
+}
+body.present-editor .grid,body.present-viewer .grid{
+  height:100%;
+}
+/* Cells fill their row — no min-height, clip overflow */
+body.present-editor .cell,body.present-viewer .cell{
+  min-height:0!important;overflow:hidden;
+}
+/* Smaller text to pack more in */
+body.present-editor .jname,body.present-viewer .jname{font-size:11px;white-space:nowrap}
+body.present-editor .jnote,body.present-viewer .jnote{font-size:9px}
+body.present-editor .ch.day-h .dn,body.present-viewer .ch.day-h .dn{font-size:11px}
+body.present-editor .ch.day-h .dd,body.present-viewer .ch.day-h .dd{font-size:8px}
+body.present-editor .cl-num,body.present-viewer .cl-num{font-size:16px}
+body.present-editor .jremove,body.present-viewer .jremove{width:16px;height:16px;font-size:10px}
+body.present-editor .week-title,body.present-viewer .week-title{font-size:11px}
+body.present-editor .week-rev,body.present-viewer .week-rev{font-size:9px}
+/* Hide non-essential items */
+body.present-editor .notes-footer,body.present-viewer .notes-footer{display:none!important}
+body.present-editor .sat-bar,body.present-viewer .sat-bar{display:none}
+body.present-editor .rv-lbl,body.present-editor .rv-day,body.present-editor .rv-ros{display:none}
+
+/* Editor mode — keep editing controls, shrink header */
+body.present-editor .hdr{height:36px}
 body.present-editor .brand{display:none}
 body.present-editor .sync{display:none}
 body.present-editor #theme-btn{display:none}
-body.present-editor #print-modal{display:none}
 body.present-editor .settings-pop{display:none!important}
 body.present-editor #present-btn{border-color:var(--yellow);color:var(--yellow)}
-body.present-editor .hdr-gap{flex:0.2}
-/* Viewer display mode — minimal chrome, no edit controls, large view */
-body.present-viewer .hdr{height:34px;background:#0d0f14;border-bottom:1px solid #252a38}
+
+/* Viewer display mode — no controls at all */
+body.present-viewer .hdr{height:32px;background:#0d0f14;border-bottom:1px solid #1e2330}
 body.present-viewer .brand{display:none}
 body.present-viewer .sync{display:none}
 body.present-viewer #theme-btn{display:none}
@@ -370,14 +419,7 @@ body.present-viewer .nav-cluster{display:none}
 body.present-viewer .cell-add{display:none!important}
 body.present-viewer .jremove{display:none!important}
 body.present-viewer .sun-toggle{display:none}
-body.present-viewer .hdr-gap{flex:1}
-body.present-viewer .notes-footer{display:none}
-body.present-viewer .week-rev .inv{font-size:13px}
-body.present-viewer .jname{font-size:14px}
-body.present-viewer .jnote{font-size:11px}
-body.present-viewer .ch.day-h .dn{font-size:16px}
-body.present-viewer .cl-num{font-size:26px}
-body.present-viewer .cell{min-height:90px}
+body.present-viewer .week-bar-right .week-rev .inv{font-size:10px}
 
 /* ── PRINT MODAL ──────────────────────────────────────────────────────── */
 #print-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center}
@@ -1168,6 +1210,11 @@ function buildWeek(wi,label,isNext){
   const rw=isMobile?0:ROSTER_W;
   const dayMin=isMobile?'80px':'1fr';
   grid.style.gridTemplateColumns=rw>0?`${cw}px repeat(${nd},${dayMin}) ${rw}px`:`${cw}px repeat(${nd},${dayMin})`;
+  // In present mode: set explicit rows so grid fills the outer height — header row auto, each crew row 1fr
+  if(_presentMode){
+    grid.style.gridTemplateRows=`auto repeat(${S.numCrews},1fr)`;
+    grid.style.height='100%';
+  }
   grid.appendChild(mkEl('div','ch corner'));
   const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
   for(let di=0;di<nd;di++){
@@ -1660,36 +1707,36 @@ function doPrint(which){
 let _presentMode = null; // null | 'editor' | 'viewer'
 function togglePresent(){
   if(_presentMode){
-    // Exit presentation mode
     document.body.classList.remove('present-editor','present-viewer');
     _presentMode=null;
-    document.getElementById('present-btn').title='Presentation mode (F11 for fullscreen)';
+    document.getElementById('present-btn').textContent='⛶';
+    document.getElementById('present-btn').title='Presentation mode — fit both weeks to screen';
     render();
     return;
   }
-  // Enter presentation mode
   _presentMode=VIEWER_MODE?'viewer':'editor';
   document.body.classList.add('present-'+_presentMode);
+  document.getElementById('present-btn').textContent='⊠';
   document.getElementById('present-btn').title='Exit presentation mode';
-  // Attempt fullscreen
-  if(document.documentElement.requestFullscreen){
-    document.documentElement.requestFullscreen().catch(()=>{});
-  }
   render();
 }
-document.addEventListener('fullscreenchange',()=>{
-  // If user exits fullscreen (Esc), also exit present mode if active
-  if(!document.fullscreenElement&&_presentMode){
-    document.body.classList.remove('present-editor','present-viewer');
-    _presentMode=null;
-    document.getElementById('present-btn').title='Presentation mode (F11 for fullscreen)';
-    render();
-  }
-});
+// F11: toggle fullscreen only (browser native) — presentation layout is separate
 document.addEventListener('keydown',e=>{
   if(e.key==='F11'){
+    // Let browser handle fullscreen natively; also toggle our layout
     e.preventDefault();
-    togglePresent();
+    if(document.fullscreenElement){
+      document.exitFullscreen().catch(()=>{});
+      if(_presentMode){
+        document.body.classList.remove('present-editor','present-viewer');
+        _presentMode=null;
+        document.getElementById('present-btn').textContent='⛶';
+        render();
+      }
+    } else {
+      document.documentElement.requestFullscreen().catch(()=>{});
+      if(!_presentMode) togglePresent();
+    }
   }
   if(e.key==='Escape'){closeEdit();closeSummary();closeRoster();closePrintModal();closeViewerInfo();}
 });

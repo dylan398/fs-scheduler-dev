@@ -1035,7 +1035,7 @@ function performDrop(src,tgt){
     S.weeks[twi].a[tci][tdi].push({job:src.jobName,note:'',s:'working',val:pd,night:false});
   }
   syncJobSummary(twi);
-  save();render();
+  save();if(_presentMode)renderPresent();else render();
 }
 
 function attachCardDrag(cardEl,wi,di,ci,ji){
@@ -1197,9 +1197,9 @@ function renderPresent(){
   syncJobSummary(S.viewIdx);
   syncJobSummary(S.viewIdx+1);
 
-  // NEXT WEEK left, THIS WEEK right
-  main.appendChild(buildPresentWeek(S.viewIdx+1, true));
+  // THIS WEEK left, NEXT WEEK right
   main.appendChild(buildPresentWeek(S.viewIdx, false));
+  main.appendChild(buildPresentWeek(S.viewIdx+1, true));
 
   if(_pendingSave){_pendingSave=false;setTimeout(save,200);}
 }
@@ -1227,8 +1227,12 @@ function buildPresentWeek(wi, isNext){
     :isThisWeek?`<span class="pres-week-label curr">THIS WEEK</span>`:'';
   const bar=document.createElement('div');
   bar.className='pres-bar'+(isThisWeek?' curr-bar':'');
-  bar.innerHTML=`<div class="pres-bar-left">${labelHtml}<span class="pres-week-dates">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div>`
-    +`<div class="pres-bar-rev"><span style="color:${schedColor}">$${fmt(wSched)}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>`;
+  // Viewer mode: hide all dollar amounts
+  const showMoney=!(_presentMode==='viewer');
+  const moneyHtml=showMoney
+    ?`<div class="pres-bar-rev"><span style="color:${schedColor}">$${fmt(wSched)}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>`
+    :'';
+  bar.innerHTML=`<div class="pres-bar-left">${labelHtml}<span class="pres-week-dates">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div>${moneyHtml}`;
   panel.appendChild(bar);
 
   // ── Job strip ───────────────────────────────────────────────────────────
@@ -1244,9 +1248,11 @@ function buildPresentWeek(wi, isNext){
       const chip=document.createElement('div');
       chip.className='pres-chip';
       if(jc) chip.style.borderLeftColor=jc;
+      // Viewer: hide invoice amounts on chips
+      const invHtml=showMoney?`<span class="pres-chip-inv${d.invoiceAmt?' has':''}">${d.invoiceAmt?'$'+fmt(d.invoiceAmt):''}</span>`:'';
       chip.innerHTML=`<span class="pres-chip-name">${esc(jobName)}</span>`
         +(pm?`<span class="pres-chip-pm">${esc(pm)}</span>`:'')
-        +`<span class="pres-chip-inv${d.invoiceAmt?' has':''}">${d.invoiceAmt?'$'+fmt(d.invoiceAmt):''}</span>`
+        +invHtml
         +(d.finishing?`<span class="pres-chip-fin">★</span>`:'');
       chip.addEventListener('click',e=>{ if(!VIEWER_MODE) openJobSummary(wi,jobName,e); });
       strip.appendChild(chip);
@@ -1299,6 +1305,8 @@ function buildPresentWeek(wi, isNext){
       const isToday=isThisWeek&&wk.dates[di]===todayStr;
       const cell=document.createElement('div');
       cell.className='pres-cell'+(isToday?' today':'')+(isSat||isSun?' sat':'');
+      // data attrs needed by getDropCell for drag-and-drop
+      cell.dataset.wi=wi; cell.dataset.di=di; cell.dataset.ci=ci;
 
       const jobs=(wk.a[ci]&&wk.a[ci][di])||[];
       jobs.forEach((j,ji)=>{
@@ -1310,11 +1318,14 @@ function buildPresentWeek(wi, isNext){
         card.innerHTML=`<div class="pres-jname">${j.night?'🌙 ':''}${esc(j.job)}</div>`
           +(j.note?`<div class="pres-jnote">${esc(j.note)}</div>`:'');
         if(!VIEWER_MODE){
-          card.addEventListener('click',e=>{e.stopPropagation();openEditJob(wi,di,ci,ji,e);});
+          // Remove button
           const rm=document.createElement('button');
           rm.className='pres-jremove';rm.innerHTML='×';rm.title='Remove';
+          rm.addEventListener('pointerdown',e=>e.stopPropagation());
           rm.addEventListener('click',e=>{e.stopPropagation();S.weeks[wi].a[ci][di].splice(ji,1);save();renderPresent();});
           card.appendChild(rm);
+          // Full drag support — reuse existing handler
+          attachCardDrag(card,wi,di,ci,ji);
         } else {
           card.addEventListener('click',e=>{e.stopPropagation();openViewerInfo(j,e);});
         }

@@ -391,45 +391,58 @@ body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 .pres-grid-outer{flex:1;min-height:0;overflow:hidden}
 .pres-grid{display:grid;height:100%}
 /* Day header cells */
-.pres-dh{background:#ece8e1;border-right:1px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 3px}
-.pres-dh.today{background:#e8f0fa}
+.pres-dh{background:#ece8e1;border-right:1px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px}
+.pres-dh.today{background:#deeaff}
 .pres-dh.sat{background:#f0ede5}
-.pres-dh .dn{font-family:var(--font-d);font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#3a3530;line-height:1}
-.pres-dh .dd{font-family:var(--font-m);font-size:9px;color:var(--txt-muted);margin-top:1px}
+.pres-dh .dn{font-family:var(--font-d);font-weight:800;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:#3a3530;line-height:1}
+.pres-dh .dd{font-family:var(--font-m);font-size:10px;color:var(--txt-muted);margin-top:1px}
 .pres-dh.today .dn{color:#1a5fa0}
 /* Corner */
 .pres-corner{background:#e4e0d8;border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark)}
 /* Crew label cells */
-.pres-cl{background:var(--crew-col);border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:2px;overflow:hidden}
+.pres-cl{background:var(--crew-col);border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:3px;overflow:hidden}
 .pres-cl:hover{background:#dedad2}
-.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:22px;color:#3a3530;line-height:1}
-.pres-cl-names{font-size:8px;color:var(--txt-muted);text-align:center;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px}
-/* Job cells */
-.pres-cell{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);background:var(--bg-cell);padding:2px;overflow:hidden;position:relative}
-.pres-cell.today{background:#f8fbff}
+.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:28px;color:#3a3530;line-height:1}
+.pres-cl-names{font-size:9px;color:var(--txt-muted);text-align:center;line-height:1.4;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px}
+/* Job cells — flex column so cards stretch to fill */
+.pres-cell{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);background:var(--bg-cell);padding:3px;overflow:hidden;position:relative;display:flex;flex-direction:column;gap:2px}
+.pres-cell.today{background:#f0f6ff}
 .pres-cell.sat{background:#faf8f4}
-/* Job cards in present mode */
-.pres-jcard{border-left:3px solid #c4bfb6;background:#f5f3ee;padding:2px 4px 2px 5px;margin-bottom:2px;overflow:hidden;position:relative}
-.pres-jcard.night{background:#1e2330}
-.pres-jname{font-family:var(--font-d);font-weight:700;font-size:11px;color:var(--txt);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:14px}
-.pres-jnote{font-size:9px;color:var(--txt-dim);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pres-jremove{position:absolute;top:1px;right:1px;background:rgba(0,0,0,.08);border:none;color:#aaa;width:13px;height:13px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}
-.pres-jremove:hover{color:var(--red)}
-.pres-add{display:flex;align-items:center;justify-content:center;color:#d0ccc4;font-size:18px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;height:18px}
+/* Job cards — fill available height, bold and readable */
+.pres-jcard{flex:1;min-height:0;border-left:6px solid #c4bfb6;background:#f5f3ee;padding:7px 8px 5px 10px;overflow:hidden;position:relative;display:flex;flex-direction:column;justify-content:space-between;transition:opacity .1s}
+.pres-jcard:hover{opacity:.88}
+.pres-jcard.night{background:#1a1d28;border-left-color:#4a9eff}
+/* Job name — large, bold, readable at distance */
+.pres-jname{font-family:var(--font-d);font-weight:800;font-size:15px;color:var(--txt);line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding-right:16px}
+.pres-jcard.night .pres-jname{color:#c8cad4}
+/* Note — clear secondary text */
+.pres-jnote{font-size:11px;color:var(--txt-dim);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.pres-jcard.night .pres-jnote{color:#6a7080}
+/* Footer: status badge + night indicator */
+.pres-jfoot{display:flex;align-items:center;gap:5px;margin-top:4px;flex-shrink:0}
+.pres-jstat{font-family:var(--font-d);font-weight:700;font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:1px 5px;border-radius:1px}
+.pres-jnight{font-size:10px;line-height:1}
+/* Remove button */
+.pres-jremove{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.1);border:none;color:#aaa;width:15px;height:15px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;border-radius:1px}
+.pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.15)}
+/* Add button — fills empty cells, small when cell has jobs */
+.pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#d4d0c8;font-size:26px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:20px;transition:color .12s}
 .pres-add:hover{color:#9a9590}
+.pres-add.has-jobs{flex:0 0 16px;font-size:14px;min-height:0}
 /* Dark mode overrides for present grid */
 body.dark .pres-week{background:#1a1d26;border-color:#2e3448}
-body.dark .pres-dh{background:#252a38;border-color:#3a4055;color:#8a90a0}
+body.dark .pres-dh{background:#252a38;border-color:#3a4055}
 body.dark .pres-dh .dn{color:#a0a8c0}
+body.dark .pres-dh .dd{color:#555c70}
 body.dark .pres-dh.today{background:#162035}
 body.dark .pres-corner{background:#1e2330}
 body.dark .pres-cl{background:#252a38;border-color:#3a4055}
 body.dark .pres-cl-num{color:#a0a8c0}
+body.dark .pres-cl-names{color:#555c70}
 body.dark .pres-cell{background:#1e2330;border-color:#2e3448}
 body.dark .pres-cell.today{background:#162035}
 body.dark .pres-jcard{background:#252a38}
-body.dark .pres-jname{color:#c8cad4}
-body.dark .pres-jnote{color:#6a7080}
+body.dark .pres-jcard:not(.night){background:#252a38}
 
 /* ── PRINT MODAL ──────────────────────────────────────────────────────── */
 #print-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center}
@@ -1308,17 +1321,33 @@ function buildPresentWeek(wi, isNext){
         const jc=(S.jobColors||{})[j.job];
         const card=document.createElement('div');
         card.className='pres-jcard'+(j.night?' night':'');
-        if(jc) card.style.borderLeftColor=jc;
-        card.innerHTML=`<div class="pres-jname">${j.night?'🌙 ':''}${esc(j.job)}</div>`
-          +(j.note?`<div class="pres-jnote">${esc(j.note)}</div>`:'');
+        // Thick left border + subtle background tint from job color
+        if(jc){
+          card.style.borderLeftColor=jc;
+          const hex=jc.replace('#','');
+          const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+          if(!j.night) card.style.background=`rgba(${r},${g},${b},0.09)`;
+        }
+        // Status badge (skip 'working' — that's the default)
+        const statColors={working:'#4a9eff',punch:'#d4a017',free:'#2db87a',standby:'#9b6dff'};
+        const statLabels={punch:'Punch',free:'Free Job',standby:'Standby'};
+        const statLabel=statLabels[j.s]||'';
+        const statColor=statColors[j.s]||'#4a9eff';
+        const footHtml=(statLabel||j.night)
+          ?`<div class="pres-jfoot">`
+            +(j.night?`<span class="pres-jnight">🌙</span>`:'')
+            +(statLabel?`<span class="pres-jstat" style="background:${statColor}22;color:${statColor}">${statLabel}</span>`:'')
+            +`</div>`
+          :'';
+        card.innerHTML=`<div class="pres-jname">${esc(j.job)}</div>`
+          +(j.note?`<div class="pres-jnote">${esc(j.note)}</div>`:'')
+          +footHtml;
         if(!VIEWER_MODE){
-          // Remove button
           const rm=document.createElement('button');
           rm.className='pres-jremove';rm.innerHTML='×';rm.title='Remove';
           rm.addEventListener('pointerdown',e=>e.stopPropagation());
           rm.addEventListener('click',e=>{e.stopPropagation();S.weeks[wi].a[ci][di].splice(ji,1);save();renderPresent();});
           card.appendChild(rm);
-          // Full drag support — reuse existing handler
           attachCardDrag(card,wi,di,ci,ji);
         } else {
           card.addEventListener('click',e=>{e.stopPropagation();openViewerInfo(j,e);});
@@ -1328,7 +1357,8 @@ function buildPresentWeek(wi, isNext){
 
       if(!VIEWER_MODE){
         const add=document.createElement('div');
-        add.className='pres-add';add.textContent='+';add.title='Add job';
+        add.className='pres-add'+(jobs.length?' has-jobs':'');
+        add.textContent='+';add.title='Add job';
         add.addEventListener('click',e=>{e.stopPropagation();openEditJob(wi,di,ci,-1,e);});
         cell.appendChild(add);
       }

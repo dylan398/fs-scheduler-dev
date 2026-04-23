@@ -1255,6 +1255,7 @@ function buildPresentWeek(wi, isNext){
         +invHtml
         +(d.finishing?`<span class="pres-chip-fin">★</span>`:'');
       chip.addEventListener('click',e=>{ if(!VIEWER_MODE) openJobSummary(wi,jobName,e); });
+      attachChipDrag(chip,wi,jobName);
       strip.appendChild(chip);
     });
     panel.appendChild(strip);

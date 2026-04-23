@@ -958,22 +958,9 @@ function doLogin() {
   initFirebase();
 }
 function doLogout() {
-  // Clear session and reload to show login screen
   localStorage.removeItem('sfs_pass');
   localStorage.removeItem('sfs_mode');
-  S = null;
-  // Reset presentation mode so next login starts clean
-  if(_presentMode){
-    document.body.classList.remove('present-editor','present-viewer');
-    _presentMode=null;
-  }
-  DB.ref(DB_PATH).off('value');
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('mode-badge').textContent = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-err').textContent = '';
-  document.body.classList.remove('viewer');
+  window.location.reload();
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────────

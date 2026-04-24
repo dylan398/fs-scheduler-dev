@@ -471,12 +471,13 @@ body.dark .pres-jcard:not(.night){background:#252a38}
 .tbs-bar{background:#1a1d26;border-top:1px solid var(--grid-dark);display:flex;align-items:stretch;flex-wrap:wrap;min-height:50px}
 .tbs-bar::-webkit-scrollbar{height:3px}
 .tbs-label{font-family:var(--font-d);font-weight:700;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#3a4055;writing-mode:vertical-rl;padding:8px 6px;flex-shrink:0;display:flex;align-items:center;border-right:1px solid #252a38}
-.tbs-chip{background:#13161e;border-right:1px solid #252a38;border-left:3px dashed #3a4055;padding:6px 24px 6px 10px;cursor:grab;min-width:120px;max-width:165px;display:flex;flex-direction:column;justify-content:space-between;position:relative;transition:background .12s;flex-shrink:0;touch-action:none}
+.tbs-chip{background:#1e2330;border-right:1px solid #2e3448;border-left:3px dashed #4a5880;padding:6px 24px 6px 10px;cursor:grab;min-width:120px;max-width:165px;display:flex;flex-direction:column;justify-content:space-between;position:relative;transition:background .12s;flex-shrink:0;touch-action:none}
 .tbs-chip:active{cursor:grabbing}
-.tbs-chip:hover{background:#1e2330}
-.tbs-chip-name{font-family:var(--font-d);font-weight:700;font-size:12px;color:#a0a8c0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
-.tbs-chip-foot{font-family:var(--font-m);font-size:10px;color:#3a4055;display:flex;gap:5px;flex-wrap:wrap}
+.tbs-chip:hover{background:#252a3e}
+.tbs-chip-name{font-family:var(--font-d);font-weight:700;font-size:13px;color:#d0d4e8;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.tbs-chip-foot{font-family:var(--font-m);font-size:10px;color:#7a8090;display:flex;gap:5px;flex-wrap:wrap}
 .tbs-chip-foot .tpm{color:#4a9eff}
+.tbs-sched-tag{color:var(--yellow);font-family:var(--font-d);font-weight:700;font-size:9px;letter-spacing:.04em}
 .tbs-chip-remove{position:absolute;top:3px;right:4px;background:transparent;border:none;color:#3a4055;font-size:13px;cursor:pointer;padding:2px 4px;line-height:1;transition:color .12s}
 .tbs-chip-remove:hover{color:var(--red)}
 .tbs-add-btn{background:transparent;border:1px dashed #2e3448;color:#3a4055;padding:5px 12px;font-family:var(--font-d);font-weight:700;font-size:16px;cursor:pointer;margin:5px;flex-shrink:0;transition:all .12s;align-self:center}
@@ -1286,8 +1287,8 @@ function highlightDrop(x,y){
   if(highlightedCell){highlightedCell.classList.remove('drag-over');highlightedCell=null;}
   if(highlightedTBS){highlightedTBS.classList.remove('tbs-drag-over');highlightedTBS=null;}
   document.querySelectorAll('.cell-drop-line').forEach(l=>l.remove());
-  // TBS drop zone — only for cell card drags
-  if(DRAG&&DRAG.type==='cell'){
+  // TBS drop zone — cell cards and job strip chips can both be queued
+  if(DRAG&&(DRAG.type==='cell'||DRAG.type==='strip')){
     const tbsTgt=getDropTBS(x,y);
     if(tbsTgt){
       const tbsEl=document.querySelector('.tbs-bar[data-tbs-zone="'+tbsTgt.wi+'"]');
@@ -1428,8 +1429,9 @@ function attachChipDrag(chipEl,wi,jobName){
       if(dragging){
         clearHighlight();
         if(ghost)document.body.removeChild(ghost);
-        const tgt=getDropCell(ev.clientX,ev.clientY);
-        performDrop({type:'strip',wi,jobName},tgt);
+        const tbsTgt=getDropTBS(ev.clientX,ev.clientY);
+        if(tbsTgt){performDropToTBS({type:'strip',wi,jobName},tbsTgt);}
+        else{const tgt=getDropCell(ev.clientX,ev.clientY);performDrop({type:'strip',wi,jobName},tgt);}
         DRAG=null;
       }else{
         openJobSummary(wi,jobName,ev);
@@ -1442,20 +1444,31 @@ function attachChipDrag(chipEl,wi,jobName){
 
 // ── TBS DROP (cell → TBS zone) ────────────────────────────────────────────
 function performDropToTBS(src,tgt){
-  if(!tgt||src.type!=='cell')return;
+  if(!tgt)return;
   const{wi:twi}=tgt;
-  const job=S.weeks[src.wi].a[src.ci]&&S.weeks[src.wi].a[src.ci][src.di]&&S.weeks[src.wi].a[src.ci][src.di][src.ji];
-  if(!job)return;
-  pushUndo();
-  const srcSum=S.weeks[src.wi].jobSummary[job.job]||{};
-  S.weeks[src.wi].a[src.ci][src.di].splice(src.ji,1);
-  syncJobSummary(src.wi);
-  if(!S.weeks[twi].tbs)S.weeks[twi].tbs=[];
-  const existIdx=(S.weeks[twi].tbs||[]).findIndex(t=>t.name.toLowerCase()===job.job.toLowerCase());
-  if(existIdx<0){
-    S.weeks[twi].tbs.push({name:job.job,pm:srcSum.pm||'',tbsNote:srcSum.note||'',days:srcSum.totalDays||0,value:srcSum.invoiceAmt||0});
+
+  if(src.type==='cell'){
+    const job=S.weeks[src.wi].a[src.ci]&&S.weeks[src.wi].a[src.ci][src.di]&&S.weeks[src.wi].a[src.ci][src.di][src.ji];
+    if(!job)return;
+    pushUndo();
+    const srcSum=S.weeks[src.wi].jobSummary[job.job]||{};
+    S.weeks[src.wi].a[src.ci][src.di].splice(src.ji,1);
+    syncJobSummary(src.wi);
+    if(!S.weeks[twi].tbs)S.weeks[twi].tbs=[];
+    if(!(S.weeks[twi].tbs||[]).find(t=>t.name.toLowerCase()===job.job.toLowerCase())){
+      S.weeks[twi].tbs.push({name:job.job,pm:srcSum.pm||'',tbsNote:srcSum.note||'',days:srcSum.totalDays||0,value:srcSum.invoiceAmt||0});
+    }
+    save();render();
+
+  }else if(src.type==='strip'){
+    // Queue job in TBS — does NOT remove it from the schedule
+    if(!S.weeks[twi].tbs)S.weeks[twi].tbs=[];
+    if((S.weeks[twi].tbs||[]).find(t=>t.name.toLowerCase()===src.jobName.toLowerCase()))return;
+    const sum=S.weeks[src.wi].jobSummary[src.jobName]||{};
+    pushUndo();
+    S.weeks[twi].tbs.push({name:src.jobName,pm:sum.pm||'',tbsNote:sum.note||'',days:sum.totalDays||0,value:sum.invoiceAmt||0});
+    save();render();
   }
-  save();render();
 }
 
 // ── TBS CHIP DRAG (TBS chip → cell) ──────────────────────────────────────
@@ -1911,7 +1924,10 @@ function buildTBSBar(wi){
   if(!tbs.length)bar.appendChild(mkEl('div','tbs-empty','Queue jobs here — drag a chip to a cell to schedule'));
   tbs.forEach((t,idx)=>{
     const chip=document.createElement('div');chip.className='tbs-chip';
+    const isOnBoard=!!(wk.jobSummary&&wk.jobSummary[t.name]);
+    if(isOnBoard)chip.style.cssText='border-left:3px solid var(--yellow)';
     const fp=[];if(t.pm)fp.push(`<span class="tpm">${esc(t.pm)}</span>`);if(t.days)fp.push(t.days+'d');if(t.value)fp.push('$'+fmt(t.value));
+    if(isOnBoard)fp.push('<span class="tbs-sched-tag">✓ on board</span>');
     chip.innerHTML=`<div class="tbs-chip-name">${esc(t.name)}</div><div class="tbs-chip-foot">${fp.join(' · ')}</div>`;
     if(!VIEWER_MODE){
       const rm=document.createElement('button');rm.className='tbs-chip-remove';rm.innerHTML='×';rm.title='Remove';

@@ -473,6 +473,32 @@ body.dark .pres-jcard:not(.night){background:#252a38}
 .sched-inv-lbl{font-family:var(--font-d);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#555c70}
 .sched-inv-val{color:#c8cad4;font-weight:500}
 
+/* ── TBS ROW ─────────────────────────────────────────────────────────────── */
+.tbs-bar{background:#1a1d26;border-top:1px solid var(--grid-dark);display:flex;align-items:stretch;flex-wrap:wrap;min-height:50px}
+.tbs-bar::-webkit-scrollbar{height:3px}
+.tbs-label{font-family:var(--font-d);font-weight:700;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#3a4055;writing-mode:vertical-rl;padding:8px 6px;flex-shrink:0;display:flex;align-items:center;border-right:1px solid #252a38}
+.tbs-chip{background:#13161e;border-right:1px solid #252a38;border-left:3px dashed #3a4055;padding:6px 24px 6px 10px;cursor:grab;min-width:120px;max-width:165px;display:flex;flex-direction:column;justify-content:space-between;position:relative;transition:background .12s;flex-shrink:0;touch-action:none}
+.tbs-chip:active{cursor:grabbing}
+.tbs-chip:hover{background:#1e2330}
+.tbs-chip-name{font-family:var(--font-d);font-weight:700;font-size:12px;color:#a0a8c0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.tbs-chip-foot{font-family:var(--font-m);font-size:10px;color:#3a4055;display:flex;gap:5px;flex-wrap:wrap}
+.tbs-chip-foot .tpm{color:#4a9eff}
+.tbs-chip-remove{position:absolute;top:3px;right:4px;background:transparent;border:none;color:#3a4055;font-size:13px;cursor:pointer;padding:2px 4px;line-height:1;transition:color .12s}
+.tbs-chip-remove:hover{color:var(--red)}
+.tbs-add-btn{background:transparent;border:1px dashed #2e3448;color:#3a4055;padding:5px 12px;font-family:var(--font-d);font-weight:700;font-size:16px;cursor:pointer;margin:5px;flex-shrink:0;transition:all .12s;align-self:center}
+.tbs-add-btn:hover{border-color:var(--yellow);color:var(--yellow)}
+.tbs-empty{display:flex;align-items:center;padding:0 12px;font-size:11px;color:#2e3448;font-style:italic;flex:1}
+.tbs-bar.tbs-drag-over{background:rgba(245,200,66,.08)!important;outline:2px dashed rgba(245,200,66,.4);outline-offset:-2px}
+body.viewer .tbs-bar{display:none!important}
+body.dark .tbs-bar{background:#161920;border-color:#2e3448}
+@media(max-width:768px){.tbs-chip{touch-action:auto;cursor:default}.tbs-bar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}}
+
+/* ── CREW HEADER ADJUSTER ────────────────────────────────────────────────── */
+.crew-adj{background:transparent;border:none;color:var(--txt-muted);font-size:15px;cursor:pointer;padding:1px 5px;line-height:1;font-family:var(--font-d);font-weight:700;transition:color .12s}
+.crew-adj:hover{color:var(--yellow)}
+.crew-nc{font-family:var(--font-m);font-size:12px;color:var(--txt);margin:0 2px}
+body.dark .crew-nc{color:#a0a8c0}
+
 /* ── CELL DROP INDICATOR ─────────────────────────────────────────────────── */
 .cell-drop-line{height:2px;background:var(--yellow);margin:1px 2px;pointer-events:none;border-radius:1px;flex-shrink:0}
 
@@ -568,16 +594,8 @@ body.viewer #undo-btn{display:none!important}
   </div>
   <div class="hdr-gap"></div>
   <div style="position:relative">
-    <button class="hdr-btn" id="settings-btn" onclick="toggleSettings()">⚙ Crews: <span id="crew-count-lbl">5</span></button>
+    <button class="hdr-btn" id="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
     <div class="settings-pop" id="settings-pop">
-      <div class="sp-row">
-        <div class="sp-lbl">Number of Crews</div>
-        <div class="sp-ctrl">
-          <button class="sp-btn" onclick="changeCrews(-1)">−</button>
-          <div class="sp-val" id="sp-crew-val">5</div>
-          <button class="sp-btn" onclick="changeCrews(1)">+</button>
-        </div>
-      </div>
       <div class="sp-row">
         <button onclick="openRestoreBackup()" style="width:100%;background:transparent;border:1px solid #3a4055;color:#8a90a0;padding:6px 8px;font-family:var(--font-d);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-align:left;transition:all .12s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='#3a4055';this.style.color='#8a90a0'">🔄 Restore Backup</button>
       </div>
@@ -713,6 +731,39 @@ body.viewer #undo-btn{display:none!important}
   </div>
 </div>
 
+<!-- TBS MODAL -->
+<div class="overlay hidden" id="tbs-ov" onclick="ovBgClick(event,'tbs-ov',closeTBS)">
+  <div class="modal" id="tbs-modal" style="width:440px">
+    <div class="mhd">
+      <div class="mhd-t" id="tbs-title">Add to Schedule Queue</div>
+      <button class="mclose" onclick="closeTBS()">✕</button>
+    </div>
+    <div class="mbody">
+      <div><div class="flbl">Job Name *</div>
+        <input class="finput" id="tbs-name" type="text" placeholder="e.g. Frisco Downtown Garage" autocomplete="off" onkeydown="tbsKey(event)">
+      </div>
+      <div><div class="flbl">Project Manager</div>
+        <select class="finput" id="tbs-pm" style="cursor:pointer"><option value="">— Unassigned —</option></select>
+      </div>
+      <div><div class="flbl">Scheduling Note <span class="flbl-hint">planning context, not shown on job cards</span></div>
+        <input class="finput" id="tbs-tbsnote" type="text" placeholder="e.g. Waiting on permit, 2 nights needed" onkeydown="tbsKey(event)">
+      </div>
+      <div class="f2col">
+        <div><div class="flbl">Days Needed</div>
+          <input class="finput" id="tbs-days" type="number" placeholder="0" min="1" onkeydown="tbsKey(event)">
+        </div>
+        <div><div class="flbl">Est. Value ($)</div>
+          <input class="finput" id="tbs-value" type="number" placeholder="0" min="0" onkeydown="tbsKey(event)">
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-save" onclick="saveTBS()">Save</button>
+      <button class="btn-del" id="tbs-del-btn" onclick="deleteTBS()" style="display:none">Remove</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRINT MODAL -->
 <div id="print-modal" class="hidden">
   <div class="print-card">
@@ -736,7 +787,7 @@ const CREW_W=58,ROSTER_W=140;
 
 // ── DATA ─────────────────────────────────────────────────────────────────
 function emptyA(nc,nd){return Array.from({length:nc},()=>Array.from({length:nd},()=>[]));} 
-function mkWeek(dates,numCrews){const nc=numCrews||5;return{dates,hasSunday:false,satRoster:[],jobSummary:{},target:0,scheduledInvoice:0,numCrews:nc,crews:null,a:emptyA(nc,dates.length)};}
+function mkWeek(dates,numCrews){const nc=numCrews||5;return{dates,hasSunday:false,satRoster:[],jobSummary:{},target:0,scheduledInvoice:0,numCrews:nc,crews:null,tbs:[],a:emptyA(nc,dates.length)};}
 function wkDates(mon){const p=mon.split(' ');const yr=new Date().getFullYear();const b=new Date(yr,MI[p[0]],parseInt(p[1]));return Array.from({length:6},(_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return MN[d.getMonth()]+' '+d.getDate();});}
 
 function initData(){
@@ -921,6 +972,12 @@ function migrate(d) {
   });
   if(!d.projectManagers) d.projectManagers=['James Thetford','Tyler Petty'];
   else d.projectManagers=fbArr(d.projectManagers,[]).filter(Boolean);
+  // Migrate tbs per week
+  d.weeks.forEach(wk=>{
+    if(!wk)return;
+    if(wk.tbs){wk.tbs=fbArr(wk.tbs,[]).filter(Boolean).map(t=>({name:t.name||'',pm:t.pm||'',tbsNote:t.tbsNote||'',days:t.days||0,value:t.value||0})).filter(t=>t.name);}
+    else{wk.tbs=[];}
+  });
   delete d._sid;
   return d;
 }
@@ -1127,6 +1184,7 @@ let AE={wi:null,di:null,ci:null,ji:null};
 let AS='working';
 let AR=null;
 let ASJ={wi:null,jobName:null};
+let ATBS={wi:null,idx:null};
 let _sumNightAllInitial=false,_sumOotAllInitial=false;
 
 // ── INSTANCE MAP ─────────────────────────────────────────────────────────
@@ -1184,6 +1242,7 @@ function getWeekCrews(wi){
 // ── DRAG STATE ────────────────────────────────────────────────────────────
 let DRAG=null;
 let highlightedCell=null;
+let highlightedTBS=null;
 
 function createGhost(text){
   const g=document.createElement('div');
@@ -1216,9 +1275,31 @@ function getDropPosition(y,cellEl){
   return cards.length;
 }
 
+function getDropTBS(x,y){
+  const g=DRAG&&DRAG.ghost;
+  if(g)g.style.visibility='hidden';
+  const el=document.elementFromPoint(x,y);
+  if(g)g.style.visibility='';
+  if(!el)return null;
+  let cur=el;
+  while(cur&&!(cur.dataset&&'tbsZone' in cur.dataset))cur=cur.parentElement;
+  if(!cur||!('tbsZone' in (cur.dataset||{})))return null;
+  return{el:cur,wi:parseInt(cur.dataset.tbsZone)};
+}
+
 function highlightDrop(x,y){
   if(highlightedCell){highlightedCell.classList.remove('drag-over');highlightedCell=null;}
+  if(highlightedTBS){highlightedTBS.classList.remove('tbs-drag-over');highlightedTBS=null;}
   document.querySelectorAll('.cell-drop-line').forEach(l=>l.remove());
+  // TBS drop zone — only for cell card drags
+  if(DRAG&&DRAG.type==='cell'){
+    const tbsTgt=getDropTBS(x,y);
+    if(tbsTgt){
+      const tbsEl=document.querySelector('.tbs-bar[data-tbs-zone="'+tbsTgt.wi+'"]');
+      if(tbsEl){tbsEl.classList.add('tbs-drag-over');highlightedTBS=tbsEl;}
+      return;
+    }
+  }
   const c=getDropCell(x,y);
   if(!c)return;
   const isSameCell=DRAG&&DRAG.type==='cell'&&c.wi===DRAG.wi&&c.di===DRAG.di&&c.ci===DRAG.ci;
@@ -1237,6 +1318,7 @@ function highlightDrop(x,y){
 
 function clearHighlight(){
   if(highlightedCell){highlightedCell.classList.remove('drag-over');highlightedCell=null;}
+  if(highlightedTBS){highlightedTBS.classList.remove('tbs-drag-over');highlightedTBS=null;}
   document.querySelectorAll('.cell-drop-line').forEach(l=>l.remove());
 }
 
@@ -1262,6 +1344,21 @@ function performDrop(src,tgt){
     const summ=S.weeks[src.wi].jobSummary[src.jobName]||{};
     const pd=summ.invoiceAmt&&summ.totalDays?Math.round(summ.invoiceAmt/summ.totalDays):0;
     S.weeks[twi].a[tci][tdi].push({job:src.jobName,note:'',s:'working',val:pd,night:false,oot:false});
+  }else if(src.type==='tbs'){
+    const tbs=S.weeks[src.wi].tbs&&S.weeks[src.wi].tbs[src.idx];
+    if(!tbs)return;
+    const jn=normalizeJobName(tbs.name);
+    const pd=tbs.value&&tbs.days?Math.round(tbs.value/tbs.days):0;
+    S.weeks[twi].a[tci][tdi].push({job:jn,note:'',s:'working',val:pd,night:false,oot:false});
+    // Seed jobSummary from TBS data if not already there
+    if(!S.weeks[twi].jobSummary[jn]){
+      S.weeks[twi].jobSummary[jn]={finishing:false,invoiceAmt:tbs.value||0,totalDays:tbs.days||0,note:tbs.tbsNote||'',pm:tbs.pm||''};
+    }
+    if(!S.jobRegistry)S.jobRegistry={};
+    if(!S.jobRegistry[jn]){S.jobRegistry[jn]={invoiceAmt:tbs.value||0,totalDays:tbs.days||0,note:tbs.tbsNote||'',pm:tbs.pm||''};}
+    if(!S.jobColors[jn]){const uc=new Set(Object.values(S.jobColors||{}));const pick=JOB_COLORS.find(c=>!uc.has(c));if(pick)S.jobColors[jn]=pick;}
+    // Remove TBS entry (job is now scheduled)
+    S.weeks[src.wi].tbs.splice(src.idx,1);
   }
   syncJobSummary(twi);
   save();if(_presentMode)renderPresent();else render();
@@ -1295,8 +1392,9 @@ function attachCardDrag(cardEl,wi,di,ci,ji){
       if(dragging){
         clearHighlight();
         if(ghost)document.body.removeChild(ghost);
-        const tgt=getDropCell(ev.clientX,ev.clientY);
-        performDrop({type:'cell',wi,di,ci,ji},tgt);
+        const tbsTgt=getDropTBS(ev.clientX,ev.clientY);
+        if(tbsTgt){performDropToTBS({type:'cell',wi,di,ci,ji},tbsTgt);}
+        else{const tgt=getDropCell(ev.clientX,ev.clientY);performDrop({type:'cell',wi,di,ci,ji},tgt);}
         DRAG=null;
       }else{
         openEditJob(wi,di,ci,ji,ev);
@@ -1347,7 +1445,53 @@ function attachChipDrag(chipEl,wi,jobName){
   });
 }
 
-// ── MODAL POSITIONING ─────────────────────────────────────────────────────
+// ── TBS DROP (cell → TBS zone) ────────────────────────────────────────────
+function performDropToTBS(src,tgt){
+  if(!tgt||src.type!=='cell')return;
+  const{wi:twi}=tgt;
+  const job=S.weeks[src.wi].a[src.ci]&&S.weeks[src.wi].a[src.ci][src.di]&&S.weeks[src.wi].a[src.ci][src.di][src.ji];
+  if(!job)return;
+  pushUndo();
+  const srcSum=S.weeks[src.wi].jobSummary[job.job]||{};
+  S.weeks[src.wi].a[src.ci][src.di].splice(src.ji,1);
+  syncJobSummary(src.wi);
+  if(!S.weeks[twi].tbs)S.weeks[twi].tbs=[];
+  const existIdx=(S.weeks[twi].tbs||[]).findIndex(t=>t.name.toLowerCase()===job.job.toLowerCase());
+  if(existIdx<0){
+    S.weeks[twi].tbs.push({name:job.job,pm:srcSum.pm||'',tbsNote:srcSum.note||'',days:srcSum.totalDays||0,value:srcSum.invoiceAmt||0});
+  }
+  save();render();
+}
+
+// ── TBS CHIP DRAG (TBS chip → cell) ──────────────────────────────────────
+function attachTBSChipDrag(chipEl,wi,idx){
+  if(VIEWER_MODE)return;
+  if(window.innerWidth<=768){chipEl.addEventListener('click',e=>openEditTBS(wi,idx,e));return;}
+  chipEl.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;
+    e.preventDefault();
+    chipEl.setPointerCapture(e.pointerId);
+    const sx=e.clientX,sy=e.clientY;let dragging=false,ghost=null;
+    const onMove=ev=>{
+      if(!dragging&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>8){
+        const t=S.weeks[wi].tbs&&S.weeks[wi].tbs[idx];if(!t)return;
+        dragging=true;ghost=createGhost(t.name);
+        DRAG={type:'tbs',wi,idx,ghost};
+      }
+      if(dragging&&ghost){DRAG.dropY=ev.clientY;moveGhost(ghost,ev.clientX,ev.clientY);highlightDrop(ev.clientX,ev.clientY);}
+    };
+    const onUp=ev=>{
+      chipEl.removeEventListener('pointermove',onMove);chipEl.removeEventListener('pointerup',onUp);
+      if(dragging){
+        clearHighlight();if(ghost)document.body.removeChild(ghost);
+        const tgt=getDropCell(ev.clientX,ev.clientY);
+        if(tgt)performDrop({type:'tbs',wi,idx},tgt);
+        DRAG=null;
+      }else{openEditTBS(wi,idx,ev);}
+    };
+    chipEl.addEventListener('pointermove',onMove);chipEl.addEventListener('pointerup',onUp);
+  });
+}
 function openViewerInfo(j){
   const statColors={working:'var(--s-working)',punch:'var(--s-punch)',free:'var(--s-free)',standby:'var(--s-standby)'};
   const statNames={working:'Working',punch:'Punch',free:'Change Order',standby:'Sub'};
@@ -1642,8 +1786,9 @@ function buildWeek(wi,label,isNext){
     :'';
 
   const si=wk.scheduledInvoice||0;
+  const mobileCrewCtrl=isMobile&&!VIEWER_MODE?`<div style="display:flex;align-items:center;gap:2px;margin-left:4px"><button class="crew-adj" onclick="adjustWeekCrews(${wi},-1)">−</button><span class="crew-nc">${getWeekNumCrews(wi)}</span><button class="crew-adj" onclick="adjustWeekCrews(${wi},1)">+</button></div>`:'';
   const siHtml=`<div class="sched-inv-block" onclick="setScheduledInvoice(${wi},event)" title="Scheduled to Invoice — click to set"><span class="sched-inv-lbl">Sched Invoice</span><span class="sched-inv-val">${si>0?'$'+fmt(si):'—'}</span></div>`;
-  bar.innerHTML=`<div style="display:flex;align-items:center">${tagHtml}<span class="week-title">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div><div class="week-bar-right">${siHtml}<div class="week-rev ${schedClass}"><span>Scheduled: <strong>$${fmt(wSched)}</strong>${tgtHtml}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div><button class="sun-toggle${wk.hasSunday?' on':''}" onclick="toggleSunday(${wi})">${wk.hasSunday?'− Sun':'+ Sun'}</button></div>`;
+  bar.innerHTML=`<div style="display:flex;align-items:center">${tagHtml}<span class="week-title">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div><div class="week-bar-right">${siHtml}<div class="week-rev ${schedClass}"><span>Scheduled: <strong>$${fmt(wSched)}</strong>${tgtHtml}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>${mobileCrewCtrl}<button class="sun-toggle${wk.hasSunday?' on':''}" onclick="toggleSunday(${wi})">${wk.hasSunday?'− Sun':'+ Sun'}</button></div>`;
   sec.appendChild(bar);
   sec.appendChild(buildJobStrip(wi));
   const gridOuter=mkEl('div','grid-outer');
@@ -1664,7 +1809,14 @@ function buildWeek(wi,label,isNext){
     dh.innerHTML=`<div class="dn">${DAY_NAMES[di]}</div><div class="dd">${wk.dates[di]||''}</div>`;
     grid.appendChild(dh);
   }
-  if(!isMobile) grid.appendChild(mkEl('div','ch roster-h','Crews'));
+  if(!isMobile){
+    const crewHdr=mkEl('div','ch roster-h');
+    if(!VIEWER_MODE){
+      const nc=getWeekNumCrews(wi);
+      crewHdr.innerHTML=`<button class="crew-adj" onclick="adjustWeekCrews(${wi},-1)" title="Remove a crew">−</button><span class="crew-nc">${nc}</span><button class="crew-adj" onclick="adjustWeekCrews(${wi},1)" title="Add a crew">+</button>`;
+    }else{crewHdr.textContent='Crews';}
+    grid.appendChild(crewHdr);
+  }
   const weekCrews=getWeekCrews(wi);
   const wkNumCrews=getWeekNumCrews(wi);
   for(let ci=0;ci<wkNumCrews;ci++){
@@ -1730,6 +1882,7 @@ function buildWeek(wi,label,isNext){
     sb.addEventListener('click',e=>{ if(!VIEWER_MODE) openSatRoster(wi,e); });
     sec.appendChild(sb);
   }
+  sec.appendChild(buildTBSBar(wi));
   return sec;
 }
 
@@ -1753,6 +1906,33 @@ function buildJobStrip(wi){
     strip.appendChild(chip);
   });
   return strip;
+}
+
+function buildTBSBar(wi){
+  const wk=S.weeks[wi];const tbs=wk.tbs||[];
+  const bar=document.createElement('div');
+  bar.className='tbs-bar';bar.dataset.tbsZone=wi;
+  bar.appendChild(mkEl('div','tbs-label','TBS'));
+  if(!tbs.length)bar.appendChild(mkEl('div','tbs-empty','Queue jobs here — drag a chip to a cell to schedule'));
+  tbs.forEach((t,idx)=>{
+    const chip=document.createElement('div');chip.className='tbs-chip';
+    const fp=[];if(t.pm)fp.push(`<span class="tpm">${esc(t.pm)}</span>`);if(t.days)fp.push(t.days+'d');if(t.value)fp.push('$'+fmt(t.value));
+    chip.innerHTML=`<div class="tbs-chip-name">${esc(t.name)}</div><div class="tbs-chip-foot">${fp.join(' · ')}</div>`;
+    if(!VIEWER_MODE){
+      const rm=document.createElement('button');rm.className='tbs-chip-remove';rm.innerHTML='×';rm.title='Remove';
+      rm.addEventListener('pointerdown',e=>e.stopPropagation());
+      rm.addEventListener('click',e=>{e.stopPropagation();pushUndo();S.weeks[wi].tbs.splice(idx,1);save();render();});
+      chip.appendChild(rm);
+      attachTBSChipDrag(chip,wi,idx);
+    }else{chip.style.cursor='default';}
+    bar.appendChild(chip);
+  });
+  if(!VIEWER_MODE){
+    const addBtn=document.createElement('button');addBtn.className='tbs-add-btn';addBtn.textContent='+';addBtn.title='Add job to schedule queue';
+    addBtn.addEventListener('click',e=>{e.stopPropagation();openAddTBS(wi,e);});
+    bar.appendChild(addBtn);
+  }
+  return bar;
 }
 
 function syncJobSummary(wi){
@@ -1983,6 +2163,57 @@ function saveSummary(){
   save();render();closeSummary();
 }
 
+// ── TBS MODAL ────────────────────────────────────────────────────────────
+function buildTBSPMDropdown(){
+  const sel=document.getElementById('tbs-pm');const cur=sel.value;
+  sel.innerHTML='<option value="">— Unassigned —</option>';
+  (S.projectManagers||[]).forEach(pm=>{const opt=document.createElement('option');opt.value=pm;opt.textContent=pm;if(pm===cur)opt.selected=true;sel.appendChild(opt);});
+}
+function openAddTBS(wi,e){
+  ATBS={wi,idx:null};
+  document.getElementById('tbs-title').textContent='Add to Schedule Queue';
+  document.getElementById('tbs-name').value='';document.getElementById('tbs-tbsnote').value='';
+  document.getElementById('tbs-days').value='';document.getElementById('tbs-value').value='';
+  document.getElementById('tbs-del-btn').style.display='none';
+  buildTBSPMDropdown();
+  document.getElementById('tbs-ov').classList.remove('hidden');
+  positionModal(document.getElementById('tbs-modal'),e);
+  setTimeout(()=>document.getElementById('tbs-name').focus(),50);
+}
+function openEditTBS(wi,idx,e){
+  const tbs=S.weeks[wi].tbs&&S.weeks[wi].tbs[idx];if(!tbs)return;
+  ATBS={wi,idx};
+  document.getElementById('tbs-title').textContent='Edit: '+tbs.name;
+  document.getElementById('tbs-name').value=tbs.name;document.getElementById('tbs-tbsnote').value=tbs.tbsNote||'';
+  document.getElementById('tbs-days').value=tbs.days||'';document.getElementById('tbs-value').value=tbs.value||'';
+  document.getElementById('tbs-del-btn').style.display='';
+  buildTBSPMDropdown();document.getElementById('tbs-pm').value=tbs.pm||'';
+  document.getElementById('tbs-ov').classList.remove('hidden');
+  positionModal(document.getElementById('tbs-modal'),e);
+  setTimeout(()=>document.getElementById('tbs-name').focus(),50);
+}
+function closeTBS(){document.getElementById('tbs-ov').classList.add('hidden');}
+function tbsKey(e){if(e.key==='Enter'&&e.target.tagName==='INPUT')saveTBS();if(e.key==='Escape')closeTBS();}
+function saveTBS(){
+  const{wi,idx}=ATBS;
+  const name=(document.getElementById('tbs-name').value||'').trim();
+  if(!name){document.getElementById('tbs-name').focus();return;}
+  const jn=normalizeJobName(name);
+  if(!S.weeks[wi].tbs)S.weeks[wi].tbs=[];
+  // Mutual exclusion: not already scheduled this week
+  if(idx===null&&S.weeks[wi].jobSummary&&S.weeks[wi].jobSummary[jn]){alert('"'+jn+'" is already scheduled this week.');return;}
+  // No duplicate TBS entries
+  if(idx===null){const ex=S.weeks[wi].tbs.findIndex(t=>t.name.toLowerCase()===jn.toLowerCase());if(ex>=0){alert('"'+jn+'" is already in the queue.');return;}}
+  const entry={name:jn,pm:document.getElementById('tbs-pm').value||'',tbsNote:document.getElementById('tbs-tbsnote').value.trim(),days:parseInt(document.getElementById('tbs-days').value)||0,value:parseFloat(document.getElementById('tbs-value').value)||0};
+  pushUndo();
+  if(idx===null){S.weeks[wi].tbs.push(entry);}else{S.weeks[wi].tbs[idx]=entry;}
+  save();render();closeTBS();
+}
+function deleteTBS(){
+  const{wi,idx}=ATBS;if(idx===null)return;
+  pushUndo();S.weeks[wi].tbs.splice(idx,1);save();render();closeTBS();
+}
+
 // ── ROSTER ───────────────────────────────────────────────────────────────
 let _rosterWi=null;
 function openRoster(ci,e,wi){
@@ -2037,7 +2268,27 @@ function saveRoster(){
   save();render();closeRoster();
 }
 
-// ── SUNDAY / CREWS / NAV ─────────────────────────────────────────────────
+// ── ADJUST CREWS PER WEEK ─────────────────────────────────────────────────
+function adjustWeekCrews(wi,delta){
+  pushUndo();
+  const wk=S.weeks[wi];
+  const cur=getWeekNumCrews(wi);
+  const n=Math.max(1,Math.min(12,cur+delta));
+  if(n===cur)return;
+  if(!wk.crews)wk.crews=JSON.parse(JSON.stringify(S.crews));
+  const nd=wk.hasSunday?7:6;
+  if(n>cur){
+    for(let i=cur;i<n;i++){
+      if(!wk.crews[i])wk.crews.push({num:i+1,members:[]});
+      wk.a.push(Array.from({length:nd},()=>[]));
+    }
+  }else{
+    wk.crews=wk.crews.slice(0,n);
+    wk.a=wk.a.slice(0,n);
+  }
+  wk.numCrews=n;
+  save();render();
+}
 function toggleSunday(wi){pushUndo();const wk=S.weeks[wi];wk.hasSunday=!wk.hasSunday;if(wk.hasSunday){if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});}else{wk.dates=wk.dates.slice(0,6);wk.a.forEach(cr=>cr.splice(6,1));}save();render();}
 function changeCrews(delta){
   pushUndo();
@@ -2062,8 +2313,6 @@ function changeCrews(delta){
   });
   // Keep S.numCrews in sync for new-week defaults
   S.numCrews=getWeekNumCrews(S.viewIdx);
-  document.getElementById('crew-count-lbl').textContent=S.numCrews;
-  document.getElementById('sp-crew-val').textContent=S.numCrews;
   save();render();
 }
 function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}
@@ -2075,8 +2324,6 @@ function updateNav(){
     ?`${w0.dates[0]} – ${w0.dates[nd0-1]||w0.dates[5]}`
     :`${w0.dates[0]} – ${w1.dates[nd1-1]||w1.dates[5]}`;
   document.getElementById('nav-range').textContent=rangeStr;
-  document.getElementById('crew-count-lbl').textContent=getWeekNumCrews(S.viewIdx);
-  document.getElementById('sp-crew-val').textContent=getWeekNumCrews(S.viewIdx);
 }
 
 // ── ENSURE DIMS ───────────────────────────────────────────────────────────
@@ -2292,7 +2539,7 @@ document.addEventListener('keydown',e=>{
       if(!_presentMode) togglePresent();
     }
   }
-  if(e.key==='Escape'){closeEdit();closeSummary();closeRoster();closePrintModal();closeViewerInfo();}
+  if(e.key==='Escape'){closeEdit();closeSummary();closeRoster();closeTBS();closePrintModal();closeViewerInfo();}
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();doUndo();}
 });
 // Re-render on resize/rotation so mobile vs desktop layout switches correctly

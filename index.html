@@ -475,6 +475,7 @@ body.dark .pres-jcard:not(.night){background:#252a38}
 .tbs-chip:active{cursor:grabbing}
 .tbs-chip:hover{background:#252a3e}
 .tbs-chip-name{font-family:var(--font-d);font-weight:700;font-size:13px;color:#d0d4e8;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.tbs-chip-note{font-size:10px;color:#6a7080;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
 .tbs-chip-foot{font-family:var(--font-m);font-size:10px;color:#7a8090;display:flex;gap:5px;flex-wrap:wrap}
 .tbs-chip-foot .tpm{color:#4a9eff}
 .tbs-sched-tag{color:var(--yellow);font-family:var(--font-d);font-weight:700;font-size:9px;letter-spacing:.04em}
@@ -1896,7 +1897,19 @@ function buildWeek(wi,label,isNext){
 
 function buildJobStrip(wi){
   const wk=S.weeks[wi];
+  const nd=wk.hasSunday?7:6;
   const jobs=Object.keys(wk.jobSummary);
+
+  // Sort by first appearance — column-major: scan each day top-to-bottom before moving right
+  const firstPos={};
+  for(let di=0;di<nd;di++){
+    for(let ci=0;ci<wk.a.length;ci++){
+      (wk.a[ci]&&wk.a[ci][di]||[]).forEach(j=>{
+        if(j&&j.job&&firstPos[j.job]===undefined) firstPos[j.job]=di*100+ci;
+      });
+    }
+  }
+  jobs.sort((a,b)=>(firstPos[a]??99999)-(firstPos[b]??99999));
   const strip=mkEl('div','job-strip');
   strip.appendChild(mkEl('div','strip-label','JOBS'));
   if(!jobs.length){strip.appendChild(mkEl('div','job-strip-empty','Add jobs to the board — drag chips onto cells or tap to set invoicing'));return strip;}
@@ -1928,7 +1941,7 @@ function buildTBSBar(wi){
     if(isOnBoard)chip.style.cssText='border-left:3px solid var(--yellow)';
     const fp=[];if(t.pm)fp.push(`<span class="tpm">${esc(t.pm)}</span>`);if(t.days)fp.push(t.days+'d');if(t.value)fp.push('$'+fmt(t.value));
     if(isOnBoard)fp.push('<span class="tbs-sched-tag">✓ on board</span>');
-    chip.innerHTML=`<div class="tbs-chip-name">${esc(t.name)}</div><div class="tbs-chip-foot">${fp.join(' · ')}</div>`;
+    chip.innerHTML=`<div class="tbs-chip-name">${esc(t.name)}</div>${t.tbsNote?`<div class="tbs-chip-note">${esc(t.tbsNote)}</div>`:''}<div class="tbs-chip-foot">${fp.join(' · ')}</div>`;
     if(!VIEWER_MODE){
       const rm=document.createElement('button');rm.className='tbs-chip-remove';rm.innerHTML='×';rm.title='Remove';
       rm.addEventListener('pointerdown',e=>e.stopPropagation());

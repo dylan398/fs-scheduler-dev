@@ -41,12 +41,6 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
 .settings-pop.open{display:block}
 .sp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .sp-row:last-child{margin-bottom:0}
-.sp-lbl{font-family:var(--font-d);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8a90a0}
-.sp-ctrl{display:flex;align-items:center;gap:6px}
-.sp-btn{background:#1e2330;border:1px solid #3a4055;color:#8a90a0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .12s}
-.sp-btn:hover{border-color:var(--yellow);color:var(--yellow)}
-.sp-val{font-family:var(--font-m);font-size:14px;color:#e8eaf0;min-width:20px;text-align:center}
-
 /* MAIN */
 .main{flex:1;overflow:auto;background:var(--bg-board)}
 
@@ -923,9 +917,10 @@ function migrate(d) {
     const nd = wk.hasSunday ? 7 : 6;
 
     // Restore nested a[crew][day] arrays
+    const wkNc=(typeof wk.numCrews==='number'&&wk.numCrews>0)?wk.numCrews:d.numCrews;
     wk.a = fbArr(wk.a, []);
-    while(wk.a.length < d.numCrews) wk.a.push(null);
-    wk.a = wk.a.slice(0, d.numCrews);
+    while(wk.a.length < wkNc) wk.a.push(null);
+    wk.a = wk.a.slice(0, wkNc);
     for(let ci = 0; ci < wk.a.length; ci++) {
       let cr = fbArr(wk.a[ci], []);
       while(cr.length < nd) cr.push(null);
@@ -1785,6 +1780,7 @@ function buildWeek(wi,label,isNext){
     ?`<span class="week-tag ${wi===curIdx+1?'next':'curr'}">${realLabel}</span>`
     :'';
 
+  const isMobile=window.innerWidth<=768;
   const si=wk.scheduledInvoice||0;
   const mobileCrewCtrl=isMobile&&!VIEWER_MODE?`<div style="display:flex;align-items:center;gap:2px;margin-left:4px"><button class="crew-adj" onclick="adjustWeekCrews(${wi},-1)">−</button><span class="crew-nc">${getWeekNumCrews(wi)}</span><button class="crew-adj" onclick="adjustWeekCrews(${wi},1)">+</button></div>`:'';
   const siHtml=`<div class="sched-inv-block" onclick="setScheduledInvoice(${wi},event)" title="Scheduled to Invoice — click to set"><span class="sched-inv-lbl">Sched Invoice</span><span class="sched-inv-val">${si>0?'$'+fmt(si):'—'}</span></div>`;
@@ -1793,7 +1789,6 @@ function buildWeek(wi,label,isNext){
   sec.appendChild(buildJobStrip(wi));
   const gridOuter=mkEl('div','grid-outer');
   const grid=mkEl('div','grid');
-  const isMobile=window.innerWidth<=768;
   const cw=isMobile?42:CREW_W;
   const rw=isMobile?0:ROSTER_W;
   const dayMin=isMobile?'80px':'1fr';
@@ -1946,7 +1941,7 @@ function syncJobSummary(wi){
     if(!wk.jobSummary[n]){
       // Pull from global registry if available, otherwise defaults
       const reg=S.jobRegistry[n]||{};
-      wk.jobSummary[n]={finishing:false,invoiceAmt:reg.invoiceAmt||0,totalDays:reg.totalDays||0,note:reg.note||''};
+      wk.jobSummary[n]={finishing:false,invoiceAmt:reg.invoiceAmt||0,totalDays:reg.totalDays||0,note:reg.note||'',pm:reg.pm||''};
       // Distribute per-day to cards in this week that don't already have a value
       if(reg.invoiceAmt>0&&reg.totalDays>0){
         const perDay=Math.round(reg.invoiceAmt/reg.totalDays);
@@ -2290,31 +2285,6 @@ function adjustWeekCrews(wi,delta){
   save();render();
 }
 function toggleSunday(wi){pushUndo();const wk=S.weeks[wi];wk.hasSunday=!wk.hasSunday;if(wk.hasSunday){if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});}else{wk.dates=wk.dates.slice(0,6);wk.a.forEach(cr=>cr.splice(6,1));}save();render();}
-function changeCrews(delta){
-  pushUndo();
-  [S.viewIdx,S.viewIdx+1].forEach(wi=>{
-    if(!S.weeks[wi])return;
-    const wk=S.weeks[wi];
-    const cur=getWeekNumCrews(wi);
-    const n=Math.max(1,Math.min(12,cur+delta));
-    if(n===cur)return;
-    if(!wk.crews)wk.crews=JSON.parse(JSON.stringify(S.crews));
-    const nd=wk.hasSunday?7:6;
-    if(n>cur){
-      for(let i=cur;i<n;i++){
-        if(!wk.crews[i])wk.crews.push({num:i+1,members:[]});
-        wk.a.push(Array.from({length:nd},()=>[]));
-      }
-    }else{
-      wk.crews=wk.crews.slice(0,n);
-      wk.a=wk.a.slice(0,n);
-    }
-    wk.numCrews=n;
-  });
-  // Keep S.numCrews in sync for new-week defaults
-  S.numCrews=getWeekNumCrews(S.viewIdx);
-  save();render();
-}
 function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}
 function updateNav(){
   document.getElementById('nav-prev').disabled=S.viewIdx===0;

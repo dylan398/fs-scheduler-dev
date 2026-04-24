@@ -364,6 +364,7 @@ body.present-viewer #theme-btn{display:none}
 body.present-viewer #settings-btn{display:none}
 body.present-viewer .nav-cluster{display:none}
 body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
+body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{display:flex!important}
 /* pres-main fills everything below the header */
 .pres-main{display:flex;flex-direction:row;gap:3px;background:#0d0f14;padding:3px;overflow:hidden}
 .pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-board);border:1px solid var(--grid-dark)}
@@ -456,6 +457,12 @@ body.dark .pres-cell.pres-empty{background:#181c28}
 body.dark .pres-jcard{background:#252a38}
 body.dark .pres-jcard:not(.night){background:#252a38}
 
+/* ── SCHEDULED TO INVOICE ───────────────────────────────────────────────── */
+.sched-inv-block{display:flex;align-items:center;gap:5px;font-family:var(--font-m);font-size:11px;color:#8a90a0;cursor:pointer;padding-right:10px;border-right:1px solid #3a4055;transition:color .12s;flex-shrink:0}
+.sched-inv-block:hover{color:var(--yellow)}
+.sched-inv-lbl{font-family:var(--font-d);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#555c70}
+.sched-inv-val{color:#c8cad4;font-weight:500}
+
 /* ── PRINT MODAL ──────────────────────────────────────────────────────── */
 #print-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center}
 #print-modal.hidden{display:none}
@@ -498,6 +505,7 @@ body.viewer .rv-lbl{display:none!important}
 body.viewer .rv-day{display:none!important}
 body.viewer .rv-ros{display:none!important}
 body.viewer .jchip-inv{display:none!important}
+body.viewer .sched-inv-block{display:none!important}
 </style>
 
 </head>
@@ -511,13 +519,6 @@ body.viewer .jchip-inv{display:none!important}
         <div class="login-brand">SFS Crew Scheduler</div>
         <div class="login-sub">Semper Fi Striping LLC</div>
       </div>
-    </div>
-    <div>
-      <div class="login-lbl">Access Mode</div>
-      <select class="login-inp" id="login-mode">
-        <option value="editor">Editor — Can make changes</option>
-        <option value="viewer">Viewer — Read only</option>
-      </select>
     </div>
     <div>
       <div class="login-lbl">Password</div>
@@ -569,6 +570,10 @@ body.viewer .jchip-inv{display:none!important}
   <button class="hdr-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">☀</button>
   <button class="hdr-btn" onclick="openPrintModal()" title="Print schedule">⎙</button>
   <button class="hdr-btn" id="present-btn" onclick="togglePresent()" title="Presentation mode (F11 for fullscreen)">⛶</button>
+  <div id="pres-week-controls" style="display:none;align-items:center;gap:4px">
+    <button class="hdr-btn" id="pres-count-btn" onclick="togglePresentCount()" title="Toggle 1/2 week view">2W</button>
+    <button class="hdr-btn" id="pres-which-btn" onclick="togglePresentWhich()" title="Switch which week" style="display:none">NEXT</button>
+  </div>
   <div id="mode-badge" style="font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#3a4055;margin-left:6px;cursor:pointer" onclick="doLogout()" title="Click to sign out"></div>
 </header>
 
@@ -592,8 +597,8 @@ body.viewer .jchip-inv{display:none!important}
         <div class="sbtns">
           <button class="sbtn" id="sb-working" onclick="setStat('working')">Working</button>
           <button class="sbtn" id="sb-punch"   onclick="setStat('punch')">Punch</button>
-          <button class="sbtn" id="sb-free"    onclick="setStat('free')">Free Job</button>
-          <button class="sbtn" id="sb-standby" onclick="setStat('standby')">Standby</button>
+          <button class="sbtn" id="sb-free"    onclick="setStat('free')">Change Order</button>
+          <button class="sbtn" id="sb-standby" onclick="setStat('standby')">🪖 Sub</button>
         </div>
       </div>
       <div class="f2col">
@@ -694,14 +699,14 @@ body.viewer .jchip-inv{display:none!important}
 const DAY_NAMES=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MI={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-const STAT_LABELS={working:'',punch:'Punch',free:'Free Job',standby:'Standby'};
+const STAT_LABELS={working:'',punch:'Punch',free:'Change Order',standby:'🪖 Sub'};
 const STAT_KEYS=['working','punch','free','standby'];
 const STAT_SHORT={working:'sw',punch:'sp',free:'sr',standby:'ss'};
 const CREW_W=58,ROSTER_W=140;
 
 // ── DATA ─────────────────────────────────────────────────────────────────
 function emptyA(nc,nd){return Array.from({length:nc},()=>Array.from({length:nd},()=>[]));} 
-function mkWeek(dates){return{dates,hasSunday:false,satRoster:[],jobSummary:{},target:0,a:emptyA(5,dates.length)};}
+function mkWeek(dates){return{dates,hasSunday:false,satRoster:[],jobSummary:{},target:0,scheduledInvoice:0,a:emptyA(5,dates.length)};}
 function wkDates(mon){const p=mon.split(' ');const yr=new Date().getFullYear();const b=new Date(yr,MI[p[0]],parseInt(p[1]));return Array.from({length:6},(_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return MN[d.getMonth()]+' '+d.getDate();});}
 
 function initData(){
@@ -810,29 +815,51 @@ function migrate(d) {
   if(!d.jobRegistry) d.jobRegistry = {};
   else d.jobRegistry = decodeJobRegistry(d.jobRegistry);
   d.weeks.forEach(wk => { if(wk && wk.target === undefined) wk.target = 0; });
+  d.weeks.forEach(wk => { if(wk && wk.scheduledInvoice === undefined) wk.scheduledInvoice = 0; });
   if(!d.projectManagers) d.projectManagers=['James Thetford','Tyler Petty'];
   else d.projectManagers=fbArr(d.projectManagers,[]).filter(Boolean);
   delete d._sid;
   return d;
 }
 
+// ── YEAR-SAFE DATE HELPERS ───────────────────────────────────────────────
+// Determines the calendar year of weeks[0] so cross-year navigation works.
+function getWeek0Year(weeks) {
+  if(!weeks||!weeks.length||!weeks[0]||!weeks[0].dates||!weeks[0].dates[0])
+    return new Date().getFullYear();
+  const p=weeks[0].dates[0].split(' ');
+  const m=MI[p[0]],d=parseInt(p[1]);
+  const today=new Date();today.setHours(0,0,0,0);
+  const totalWeeks=weeks.length;
+  for(let yr=today.getFullYear()-3;yr<=today.getFullYear()+3;yr++){
+    const w0=new Date(yr,m,d);
+    const wEnd=new Date(w0);wEnd.setDate(w0.getDate()+(totalWeeks+4)*7);
+    const w0buf=new Date(w0);w0buf.setDate(w0.getDate()-21);
+    if(today>=w0buf&&today<=wEnd) return yr;
+  }
+  return today.getFullYear();
+}
+// Returns the absolute Monday Date for any week index — anchored to week[0]'s year.
+function getWeekAbsDate(wi,weeks) {
+  if(!weeks||!weeks.length||!weeks[0]||!weeks[0].dates||!weeks[0].dates[0]) return new Date();
+  const yr0=getWeek0Year(weeks);
+  const p=weeks[0].dates[0].split(' ');
+  const base=new Date(yr0,MI[p[0]],parseInt(p[1]));
+  base.setDate(base.getDate()+wi*7);
+  return base;
+}
 // ── LOCAL VIEW INDEX ─────────────────────────────────────────────────────
-// viewIdx is per-device. On first load anchor to the current real week.
 function currentWeekIdx(weeks) {
   if(!weeks||!weeks.length) return 0;
-  const todayStr = MN[new Date().getMonth()]+' '+new Date().getDate();
-  // Find the week that contains today (Monday = first date)
+  const today=new Date();today.setHours(0,0,0,0);
   for(let i=0;i<weeks.length;i++){
-    const wk=weeks[i]; if(!wk||!wk.dates||!wk.dates.length) continue;
-    // Check if today falls within this week
-    const d0=new Date(wk.dates[0]+' '+new Date().getFullYear());
+    const wk=weeks[i];if(!wk||!wk.dates||!wk.dates.length) continue;
+    const d0=getWeekAbsDate(i,weeks);d0.setHours(0,0,0,0);
     const nd=wk.hasSunday?7:6;
-    const d1=new Date(wk.dates[nd-1]+' '+new Date().getFullYear());
-    const today=new Date();
-    today.setHours(0,0,0,0);d0.setHours(0,0,0,0);d1.setHours(0,0,0,0);
+    const d1=new Date(d0);d1.setDate(d0.getDate()+nd-1);
     if(today>=d0&&today<=d1) return i;
   }
-  return 0;
+  return Math.max(0,weeks.length-2);
 }
 function getLocalViewIdx(d) {
   const saved = parseInt(localStorage.getItem('sfs_viewIdx'));
@@ -944,14 +971,14 @@ function initFirebase() {
 function setSync(t){document.getElementById('sync-lbl').textContent=t;}
 
 // ── SIMPLE PASSWORD GATE ─────────────────────────────────────────────────
-const APP_PASS = 'Semperfi3004!';
+const EDITOR_PASS = 'Semperfi3004!';
+const VIEWER_PASS = 'SFSView!';
 let VIEWER_MODE = false;
 
 function showLogin() {
   const saved = localStorage.getItem('sfs_pass');
-  const savedMode = localStorage.getItem('sfs_mode');
-  if(saved === APP_PASS) {
-    VIEWER_MODE = (savedMode === 'viewer');
+  if(saved === EDITOR_PASS || saved === VIEWER_PASS) {
+    VIEWER_MODE = (saved === VIEWER_PASS);
     document.body.classList.toggle('viewer', VIEWER_MODE);
     document.getElementById('mode-badge').textContent = VIEWER_MODE ? '👁 Viewer · ' + ENV : '✎ Editor · ' + ENV;
     document.getElementById('loading-screen').style.display = 'flex';
@@ -966,16 +993,14 @@ function showLogin() {
 function loginKey(e) { if(e.key === 'Enter') doLogin(); }
 function doLogin() {
   const pass = document.getElementById('login-pass').value;
-  const mode = document.getElementById('login-mode').value;
-  if(pass !== APP_PASS) {
+  if(pass !== EDITOR_PASS && pass !== VIEWER_PASS) {
     document.getElementById('login-err').textContent = 'Incorrect password.';
     document.getElementById('login-pass').value = '';
     document.getElementById('login-pass').focus();
     return;
   }
-  VIEWER_MODE = (mode === 'viewer');
+  VIEWER_MODE = (pass === VIEWER_PASS);
   localStorage.setItem('sfs_pass', pass);
-  localStorage.setItem('sfs_mode', mode);
   document.body.classList.toggle('viewer', VIEWER_MODE);
   document.getElementById('mode-badge').textContent = VIEWER_MODE ? '👁 Viewer · ' + ENV : '✎ Editor · ' + ENV;
   document.getElementById('login-screen').classList.add('hidden');
@@ -984,7 +1009,6 @@ function doLogin() {
 }
 function doLogout() {
   localStorage.removeItem('sfs_pass');
-  localStorage.removeItem('sfs_mode');
   window.location.reload();
 }
 
@@ -999,6 +1023,44 @@ let AE={wi:null,di:null,ci:null,ji:null};
 let AS='working';
 let AR=null;
 let ASJ={wi:null,jobName:null};
+
+// ── INSTANCE MAP ─────────────────────────────────────────────────────────
+let INSTANCE_MAP={};
+function buildInstanceMap(){
+  INSTANCE_MAP={};if(!S)return;
+  S.weeks.forEach((wk,wi)=>{
+    if(!wk||!wk.a)return;
+    wk.a.forEach((cr,ci)=>{
+      (cr||[]).forEach((day,di)=>{
+        (day||[]).forEach((j,ji)=>{
+          if(!j||!j.job)return;
+          const k=j.job.toLowerCase();
+          if(!INSTANCE_MAP[k])INSTANCE_MAP[k]=[];
+          INSTANCE_MAP[k].push({wi,ci,di,ji});
+        });
+      });
+    });
+  });
+}
+function getInstanceNum(jobName,wi,ci,di,ji){
+  const k=(jobName||'').toLowerCase();
+  const list=INSTANCE_MAP[k]||[];
+  if(list.length<=1)return null;
+  const idx=list.findIndex(e=>e.wi===wi&&e.ci===ci&&e.di===di&&e.ji===ji);
+  return idx>=0?idx+1:null;
+}
+
+// ── NORMALIZE JOB NAME (case-insensitive match) ──────────────────────────
+function normalizeJobName(input){
+  const lower=(input||'').toLowerCase().trim();
+  if(!lower||!S)return(input||'').trim();
+  const allNames=new Set();
+  Object.keys(S.jobColors||{}).forEach(n=>allNames.add(n));
+  Object.keys(S.jobRegistry||{}).forEach(n=>allNames.add(n));
+  S.weeks.forEach(wk=>Object.keys(wk.jobSummary||{}).forEach(n=>allNames.add(n)));
+  for(const existing of allNames){if(existing.toLowerCase()===lower)return existing;}
+  return(input||'').trim();
+}
 
 // ── DRAG STATE ────────────────────────────────────────────────────────────
 let DRAG=null;
@@ -1139,7 +1201,7 @@ function attachChipDrag(chipEl,wi,jobName){
 // ── MODAL POSITIONING ─────────────────────────────────────────────────────
 function openViewerInfo(j){
   const statColors={working:'var(--s-working)',punch:'var(--s-punch)',free:'var(--s-free)',standby:'var(--s-standby)'};
-  const statNames={working:'Working',punch:'Punch',free:'Free Job',standby:'Standby'};
+  const statNames={working:'Working',punch:'Punch',free:'Change Order',standby:'Sub'};
   const isDark=document.body.classList.contains('dark');
   const bg=isDark?'#191d28':'#fff';
   const txt=isDark?'#e8eaf0':'#1a1714';
@@ -1187,6 +1249,7 @@ let _pendingSave = false;
 
 function render(){
   if(_presentMode){ renderPresent(); updateNav(); return; }
+  buildInstanceMap();
   const main=document.getElementById('main');
   main.innerHTML='';
   main.style.cssText='';
@@ -1215,9 +1278,14 @@ function renderPresent(){
   syncJobSummary(S.viewIdx);
   syncJobSummary(S.viewIdx+1);
 
-  // THIS WEEK left, NEXT WEEK right
-  main.appendChild(buildPresentWeek(S.viewIdx, false));
-  main.appendChild(buildPresentWeek(S.viewIdx+1, true));
+  // THIS WEEK left, NEXT WEEK right — or single week if toggled
+  if(_presentSingleWeek){
+    const wi=_presentSingleWhich==='next'?S.viewIdx+1:S.viewIdx;
+    main.appendChild(buildPresentWeek(wi,wi===S.viewIdx+1));
+  }else{
+    main.appendChild(buildPresentWeek(S.viewIdx, false));
+    main.appendChild(buildPresentWeek(S.viewIdx+1, true));
+  }
 
   if(_pendingSave){_pendingSave=false;setTimeout(save,200);}
 }
@@ -1347,7 +1415,7 @@ function buildPresentWeek(wi, isNext){
         }
         // Status badge (skip 'working' — that's the default)
         const statColors={working:'#4a9eff',punch:'#d4a017',free:'#2db87a',standby:'#9b6dff'};
-        const statLabels={punch:'Punch',free:'Free Job',standby:'Standby'};
+        const statLabels={punch:'Punch',free:'Change Order',standby:'Sub'};
         const statLabel=statLabels[j.s]||'';
         const statColor=statColors[j.s]||'#4a9eff';
         const footHtml=(statLabel||j.night)
@@ -1415,7 +1483,9 @@ function buildWeek(wi,label,isNext){
     ?`<span class="week-tag ${wi===curIdx+1?'next':'curr'}">${realLabel}</span>`
     :'';
 
-  bar.innerHTML=`<div style="display:flex;align-items:center">${tagHtml}<span class="week-title">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div><div class="week-bar-right"><div class="week-rev ${schedClass}"><span>Scheduled: <strong>$${fmt(wSched)}</strong>${tgtHtml}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div><button class="sun-toggle${wk.hasSunday?' on':''}" onclick="toggleSunday(${wi})">${wk.hasSunday?'− Sun':'+ Sun'}</button></div>`;
+  const si=wk.scheduledInvoice||0;
+  const siHtml=`<div class="sched-inv-block" onclick="setScheduledInvoice(${wi},event)" title="Scheduled to Invoice — click to set"><span class="sched-inv-lbl">Sched Invoice</span><span class="sched-inv-val">${si>0?'$'+fmt(si):'—'}</span></div>`;
+  bar.innerHTML=`<div style="display:flex;align-items:center">${tagHtml}<span class="week-title">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div><div class="week-bar-right">${siHtml}<div class="week-rev ${schedClass}"><span>Scheduled: <strong>$${fmt(wSched)}</strong>${tgtHtml}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div><button class="sun-toggle${wk.hasSunday?' on':''}" onclick="toggleSunday(${wi})">${wk.hasSunday?'− Sun':'+ Sun'}</button></div>`;
   sec.appendChild(bar);
   sec.appendChild(buildJobStrip(wi));
   const gridOuter=mkEl('div','grid-outer');
@@ -1426,9 +1496,12 @@ function buildWeek(wi,label,isNext){
   const dayMin=isMobile?'80px':'1fr';
   grid.style.gridTemplateColumns=rw>0?`${cw}px repeat(${nd},${dayMin}) ${rw}px`:`${cw}px repeat(${nd},${dayMin})`;
   grid.appendChild(mkEl('div','ch corner'));
-  const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
+  const weekBase=getWeekAbsDate(wi,S.weeks);
+  const todayDateStr=new Date().toDateString();
   for(let di=0;di<nd;di++){
-    const isSat=di===5,isSun=di===6,isToday=!isNext&&wk.dates[di]===todayStr;
+    const isSat=di===5,isSun=di===6;
+    const _hd=new Date(weekBase);_hd.setDate(weekBase.getDate()+di);
+    const isToday=_hd.toDateString()===todayDateStr;
     const dh=mkEl('div',`ch day-h${isToday?' today-h':''}${isSat?' sat-h':''}${isSun?' sun-h':''}`);
     dh.innerHTML=`<div class="dn">${DAY_NAMES[di]}</div><div class="dd">${wk.dates[di]||''}</div>`;
     grid.appendChild(dh);
@@ -1441,7 +1514,9 @@ function buildWeek(wi,label,isNext){
     cl.addEventListener('click',e=>{ if(!VIEWER_MODE) openRoster(ci,e); });
     grid.appendChild(cl);
     for(let di=0;di<nd;di++){
-      const isSat=di===5,isSun=di===6,isToday=!isNext&&wk.dates[di]===todayStr;
+      const isSat=di===5,isSun=di===6;
+      const _cd=new Date(weekBase);_cd.setDate(weekBase.getDate()+di);
+      const isToday=_cd.toDateString()===todayDateStr;
       const cell=mkEl('div',`cell${isToday?' today-col':''}${isSat?' sat-col':''}${isSun?' sun-col':''}`);
       cell.dataset.wi=wi;cell.dataset.di=di;cell.dataset.ci=ci;
       const jobs=(wk.a[ci]&&wk.a[ci][di])||[];
@@ -1451,7 +1526,8 @@ function buildWeek(wi,label,isNext){
         const card=mkEl('div',`jcard${j.night?' night':''}`);
         const jobColor=(S.jobColors||{})[j.job];
         if(jobColor && !j.night) card.style.setProperty('--s-color', jobColor);
-        card.innerHTML=`<button class="jremove" onpointerdown="stopProp(event)" onclick="removeJob(event,${wi},${di},${ci},${ji})">×</button><div class="jname">${esc(j.job)}</div>${j.note?`<div class="jnote">${esc(j.note)}</div>`:''}<div class="jfoot">${pill}${j.night?'<span class="jnight">🌙</span>':''}${j.val?`<span class="jval">$${fmt(j.val)}</span>`:''}</div>`;
+        const instNum=getInstanceNum(j.job,wi,ci,di,ji);
+        card.innerHTML=`<button class="jremove" onpointerdown="stopProp(event)" onclick="removeJob(event,${wi},${di},${ci},${ji})">×</button><div class="jname">${esc(j.job)}</div>${j.note?`<div class="jnote">${esc(j.note)}</div>`:''}<div class="jfoot">${pill}${j.night?'<span class="jnight">🌙</span>':''}${j.val?`<span class="jval">$${fmt(j.val)}</span>`:''}${instNum?`<span style="font-family:var(--font-m);font-size:9px;color:#aaa9a0;margin-left:auto">#${instNum}</span>`:''}</div>`;
         attachCardDrag(card,wi,di,ci,ji);
         if(VIEWER_MODE){
           card.style.cursor='pointer';
@@ -1576,7 +1652,7 @@ function updateSBtns(){STAT_KEYS.forEach(s=>{document.getElementById('sb-'+s).cl
 function editKey(e){if(e.key==='Enter'&&e.target.tagName==='INPUT')saveJob();if(e.key==='Escape')closeEdit();}
 function saveJob(){
   const{wi,di,ci,ji}=AE;
-  const job=document.getElementById('e-job').value.trim();
+  const job=normalizeJobName(document.getElementById('e-job').value);
   if(!job){closeEdit();return;}
   ensureA(wi);
   const entry={job,note:document.getElementById('e-note').value.trim(),s:AS,val:parseFloat(document.getElementById('e-val').value)||0,night:document.getElementById('e-night').checked};
@@ -1686,8 +1762,8 @@ function saveSummary(){
 
   S.weeks[wi].jobSummary[jobName]={finishing,invoiceAmt:inv,totalDays:days,note,pm};
 
-  // Update global registry — note is week-specific, inv/days/pm are global
-  S.jobRegistry[jobName]={invoiceAmt:inv,totalDays:days,note:S.jobRegistry[jobName]?.note||note,pm};
+  // Update global registry — note now propagates like inv/days/pm
+  S.jobRegistry[jobName]={invoiceAmt:inv,totalDays:days,note,pm};
 
   // Save color
   if(!S.jobColors)S.jobColors={};
@@ -1703,6 +1779,7 @@ function saveSummary(){
       if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
       wk.jobSummary[jobName].invoiceAmt=inv;
       wk.jobSummary[jobName].totalDays=days;
+      wk.jobSummary[jobName].note=note;
       if(pm) wk.jobSummary[jobName].pm=pm;
       wk.a.forEach(cr=>cr.forEach(day=>(day||[]).forEach(j=>{if(j.job===jobName)j.val=perDay;})));
     });
@@ -1712,6 +1789,7 @@ function saveSummary(){
       if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
       wk.jobSummary[jobName].invoiceAmt=inv;
       wk.jobSummary[jobName].totalDays=days;
+      wk.jobSummary[jobName].note=note;
     });
   }
 
@@ -1720,6 +1798,7 @@ function saveSummary(){
     S.weeks.forEach((wk,i)=>{
       if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
       wk.jobSummary[jobName].pm=pm;
+      wk.jobSummary[jobName].note=note;
     });
   }
 
@@ -1793,6 +1872,17 @@ function setTarget(wi, e){
   if(val===null)return;
   const n=parseFloat(val)||0;
   wk.target=n;
+  save();render();
+}
+
+// ── SCHEDULED TO INVOICE ──────────────────────────────────────────────────
+function setScheduledInvoice(wi,e){
+  e.stopPropagation();
+  const wk=S.weeks[wi];
+  const cur=wk.scheduledInvoice||0;
+  const val=prompt('Set Scheduled to Invoice ($) — this number stays pinned while live Invoice fluctuates:',cur>0?cur:'');
+  if(val===null)return;
+  wk.scheduledInvoice=parseFloat(val)||0;
   save();render();
 }
 
@@ -1915,20 +2005,39 @@ function doPrint(which){
 }
 // ── PRESENTATION MODE ────────────────────────────────────────────────────
 let _presentMode = null; // null | 'editor' | 'viewer'
+let _presentSingleWeek = false;
+let _presentSingleWhich = 'next'; // 'next' | 'this'
 function togglePresent(){
   if(_presentMode){
     document.body.classList.remove('present-editor','present-viewer');
     _presentMode=null;
     document.getElementById('present-btn').textContent='⛶';
     document.getElementById('present-btn').title='Presentation mode — fit both weeks to screen';
+    document.getElementById('pres-week-controls').style.display='none';
     render();
     return;
   }
+  _presentSingleWeek=false;_presentSingleWhich='next';
   _presentMode=VIEWER_MODE?'viewer':'editor';
   document.body.classList.add('present-'+_presentMode);
   document.getElementById('present-btn').textContent='⊠';
   document.getElementById('present-btn').title='Exit presentation mode';
+  document.getElementById('pres-count-btn').textContent='2W';
+  document.getElementById('pres-which-btn').style.display='none';
   render();
+}
+function togglePresentCount(){
+  _presentSingleWeek=!_presentSingleWeek;
+  document.getElementById('pres-count-btn').textContent=_presentSingleWeek?'1W':'2W';
+  const wb=document.getElementById('pres-which-btn');
+  wb.style.display=_presentSingleWeek?'':'none';
+  if(_presentSingleWeek)wb.textContent=_presentSingleWhich==='next'?'NEXT':'THIS';
+  renderPresent();
+}
+function togglePresentWhich(){
+  _presentSingleWhich=_presentSingleWhich==='next'?'this':'next';
+  document.getElementById('pres-which-btn').textContent=_presentSingleWhich==='next'?'NEXT':'THIS';
+  renderPresent();
 }
 // F11: toggle fullscreen only (browser native) — presentation layout is separate
 document.addEventListener('keydown',e=>{
@@ -1941,6 +2050,7 @@ document.addEventListener('keydown',e=>{
         document.body.classList.remove('present-editor','present-viewer');
         _presentMode=null;
         document.getElementById('present-btn').textContent='⛶';
+        document.getElementById('pres-week-controls').style.display='none';
         render();
       }
     } else {

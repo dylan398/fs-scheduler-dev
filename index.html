@@ -366,7 +366,6 @@ body.present-viewer .brand{display:none}
 body.present-viewer .sync{display:none}
 body.present-viewer #theme-btn{display:none}
 body.present-viewer #settings-btn{display:none}
-body.present-viewer .nav-cluster{display:none}
 body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{display:flex!important}
 /* pres-main fills everything below the header */
@@ -2511,7 +2510,6 @@ function togglePresent(){
   document.getElementById('present-btn').textContent='⊠';
   document.getElementById('present-btn').title='Exit presentation mode';
   document.getElementById('pres-count-btn').textContent='2W';
-  document.getElementById('pres-which-btn').style.display='none';
   render();
 }
 function togglePresentCount(){

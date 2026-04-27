@@ -2672,14 +2672,14 @@ function fitSpotlightCards(){
         if(!nameEl){cellH+=30;return;}
         const nameLen=Math.max(1,nameEl.textContent.length);
         const longestWord=nameEl.textContent.trim().split(/\s+/).reduce((a,b)=>a.length>=b.length?a:b,'');
-        const maxFsByWord=Math.floor(cardInnerW/(Math.max(1,longestWord.length)*0.52));
+        const maxFsByWord=Math.floor(cardInnerW/(Math.max(1,longestWord.length)*0.62));
         // Find largest font where name fits in max 3 lines AND no word overflows
         let ns=MIN_SPOT_NAME;
         for(let trial=Math.min(MAX_SPOT_NAME,maxFsByWord);trial>=MIN_SPOT_NAME;trial--){
-          const cpl=Math.max(1,Math.floor(cardInnerW/(trial*0.52)));
+          const cpl=Math.max(1,Math.floor(cardInnerW/(trial*0.62)));
           if(Math.ceil(nameLen/cpl)<=3){ns=trial;break;}
         }
-        const cpl=Math.max(1,Math.floor(cardInnerW/(ns*0.52)));
+        const cpl=Math.max(1,Math.floor(cardInnerW/(ns*0.62)));
         const lines=Math.min(3,Math.ceil(nameLen/cpl));
         const noteH=noteEl&&noteEl.textContent?(ns*NOTE_RATIO)+4:0;
         const fH=footEl?SPOT_FOOT:0;
@@ -2698,7 +2698,7 @@ function fitSpotlightCards(){
   });
 
   // Clamp: never more than 70% of total height
-  spotH=Math.min(spotH,Math.floor(totalH*0.70));
+  spotH=Math.min(spotH,Math.floor(totalH*0.85));
   const otherRowH=nc>1?Math.max(32,Math.floor((totalH-spotH)/(nc-1))):0;
 
   // Apply flex-basis to all rows
@@ -2726,10 +2726,10 @@ function fitSpotlightCards(){
         if(!nameEl)return;
         const nameLen=Math.max(1,nameEl.textContent.length);
         const longestWord=nameEl.textContent.trim().split(/\s+/).reduce((a,b)=>a.length>=b.length?a:b,'');
-        const maxFsByWord=Math.floor(cardInnerW/(Math.max(1,longestWord.length)*0.52));
+        const maxFsByWord=Math.floor(cardInnerW/(Math.max(1,longestWord.length)*0.62));
         let ns=MIN_OTHER_NAME;
         for(let trial=Math.min(MAX_OTHER_NAME,maxFsByWord);trial>=MIN_OTHER_NAME;trial--){
-          const cpl=Math.max(1,Math.floor(cardInnerW/(trial*0.52)));
+          const cpl=Math.max(1,Math.floor(cardInnerW/(trial*0.62)));
           const lines=Math.min(3,Math.ceil(nameLen/cpl));
           if(trial*LINE_H*lines<=textAvail){ns=trial;break;}
         }

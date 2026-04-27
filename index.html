@@ -2783,7 +2783,7 @@ function buildSpotlightView(wi){
   wrap.appendChild(dhRow);
 
   // Crew rows
-  const rowsCont=document.createElement('div');rowsCont.style.cssText='flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden';
+  const rowsCont=document.createElement('div');rowsCont.className='pres-sp-rows';
   for(let ci=0;ci<nc;ci++){
     const crew=crews[ci]||{num:ci+1,members:[]};
     const row=document.createElement('div');row.className='pres-sp-row';

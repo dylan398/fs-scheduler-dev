@@ -384,9 +384,8 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 /* Crew rows container */
 .pres-sp-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 /* Individual crew row */
-.pres-sp-row{display:flex;flex:1;min-height:44px;overflow:hidden;border-bottom:1px solid #14171f;transition:flex .8s cubic-bezier(.4,0,.2,1)}
+.pres-sp-row{display:flex;flex:none;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:height .8s cubic-bezier(.4,0,.2,1)}
 .pres-sp-row:last-child{border-bottom:none}
-.pres-sp-row.spotlight{flex:5;min-height:120px}
 /* Crew label cell */
 .pres-sp-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;border-left:3px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;overflow:hidden;position:relative;transition:border-left-color .4s,background .4s}
 .pres-sp-row.spotlight .pres-sp-cl{border-left-color:#f5c842;background:#050709}
@@ -2626,35 +2625,94 @@ function applySpotlight(){
   document.querySelectorAll('.pres-sp-row').forEach((row,i)=>{
     row.classList.toggle('spotlight',i===_presSpotCrew);
   });
-  // Set font sizes immediately so text grows with the row animation
-  fitSpotlightCards();
-  // Progress bar after a tiny delay so the DOM has the new .spotlight class
-  requestAnimationFrame(startProgressBar);
+  requestAnimationFrame(()=>{
+    fitSpotlightCards();
+    requestAnimationFrame(startProgressBar);
+  });
 }
 function fitSpotlightCards(){
-  document.querySelectorAll('.pres-sp-row').forEach(row=>{
-    const isSpot=row.classList.contains('spotlight');
+  const rowsCont=document.querySelector('.pres-sp-rows');
+  if(!rowsCont)return;
+  const totalH=rowsCont.clientHeight;
+  if(!totalH)return;
+  const rows=Array.from(document.querySelectorAll('.pres-sp-row'));
+  const nc=rows.length;
+  if(!nc)return;
+
+  // ── Pass 1: Set spotlight fonts, calculate natural height ────────────
+  const SPOT_NAME_SZ=28, SPOT_NOTE_SZ=17, SPOT_FOOT_H=20, SPOT_PAD=14;
+  let spotH=60;
+  rows.forEach(row=>{
+    if(!row.classList.contains('spotlight'))return;
+    let maxCellH=0;
     row.querySelectorAll('.pres-sp-cell').forEach(cell=>{
-      cell.querySelectorAll('.pres-jcard').forEach(card=>{
-        // Natural height — never stretch to fill row
-        card.style.flex='none';
-        card.style.height='auto';
-        card.style.minHeight='unset';
+      const cards=cell.querySelectorAll('.pres-jcard');
+      if(!cards.length)return;
+      const cellW=Math.max(80,cell.clientWidth-6);
+      let cellH=6;
+      cards.forEach(card=>{
+        card.style.flex='none';card.style.height='auto';card.style.minHeight='unset';
         const nameEl=card.querySelector('.pres-jname');
         const noteEl=card.querySelector('.pres-jnote');
         const footEl=card.querySelector('.pres-jfoot');
+        if(nameEl){nameEl.style.fontSize=SPOT_NAME_SZ+'px';nameEl.style.lineHeight='1.15';}
+        if(noteEl){noteEl.style.fontSize=SPOT_NOTE_SZ+'px';noteEl.style.opacity='1';noteEl.style.display='';}
+        if(footEl)footEl.style.display='';
+        // Calculate natural card height from font math
+        const nameLen=nameEl?nameEl.textContent.length:0;
+        const charsPerLine=Math.max(1,Math.floor((cellW-24)/(SPOT_NAME_SZ*0.52)));
+        const lines=Math.max(1,Math.min(3,Math.ceil(nameLen/charsPerLine)));
+        const nameH=SPOT_NAME_SZ*1.15*lines;
+        const noteH=(noteEl&&noteEl.textContent)?SPOT_NOTE_SZ+4:0;
+        const footH=footEl?SPOT_FOOT_H:0;
+        cellH+=Math.max(36,SPOT_PAD+nameH+noteH+footH)+2;
+      });
+      if(cellH>maxCellH)maxCellH=cellH;
+    });
+    spotH=Math.max(60,maxCellH);
+  });
+
+  // ── Calculate non-spotlight row height ───────────────────────────────
+  const otherRowH=nc>1?Math.max(36,(totalH-spotH)/(nc-1)):0;
+
+  // ── Set all row heights explicitly (enables CSS height transition) ───
+  rows.forEach(row=>{
+    row.style.height=(row.classList.contains('spotlight')?spotH:otherRowH)+'px';
+  });
+
+  // ── Pass 2: Non-spotlight — largest font fitting full name ───────────
+  rows.forEach(row=>{
+    if(row.classList.contains('spotlight'))return;
+    const rH=otherRowH;
+    row.querySelectorAll('.pres-sp-cell').forEach(cell=>{
+      const cards=cell.querySelectorAll('.pres-jcard');
+      if(!cards.length)return;
+      const n=cards.length;
+      const cardH=Math.max(20,(rH-6)/n-2);
+      const textAvail=Math.max(6,cardH-8);
+      const cellW=Math.max(60,cell.clientWidth-6);
+      const cardW=Math.max(40,cellW-22);
+      cards.forEach(card=>{
+        card.style.flex='none';card.style.height=cardH+'px';card.style.minHeight='unset';
+        const nameEl=card.querySelector('.pres-jname');
+        const noteEl=card.querySelector('.pres-jnote');
+        const footEl=card.querySelector('.pres-jfoot');
+        if(noteEl){noteEl.style.display='none';noteEl.style.opacity='0';}
+        if(footEl)footEl.style.display='none';
         if(!nameEl)return;
-        if(isSpot){
-          nameEl.style.fontSize='28px';
-          nameEl.style.lineHeight='1.15';
-          if(noteEl){noteEl.style.fontSize='17px';noteEl.style.opacity='1';noteEl.style.display='';}
-          if(footEl)footEl.style.display='';
-        }else{
-          nameEl.style.fontSize='11px';
-          nameEl.style.lineHeight='1.2';
-          if(noteEl){noteEl.style.opacity='0';noteEl.style.display='none';}
-          if(footEl)footEl.style.display='none';
-        }
+        // Find largest font where full name fits (wrapping OK, max 3 lines)
+        const nameLen=Math.max(1,nameEl.textContent.length);
+        // Binary: try 1-line, 2-line, 3-line sizing, pick largest that fits
+        const fs1=Math.min(textAvail/1.15,(cardW)/(nameLen*0.52)*1.05);
+        const fs2=Math.min(textAvail/2.3,(cardW*2)/(nameLen*0.52)*1.05);
+        const fs3=Math.min(textAvail/3.45,(cardW*3)/(nameLen*0.52)*1.05);
+        let fs=Math.max(fs1,fs2,fs3); // largest that fits in available height
+        // Verify chosen size actually fits height (safety clamp)
+        const lines=Math.ceil(nameLen/Math.max(1,Math.floor(cardW/(fs*0.52))));
+        if(fs*1.15*lines>textAvail)fs=textAvail/(lines*1.15);
+        fs=Math.min(16,Math.max(7,fs));
+        nameEl.style.fontSize=fs+'px';
+        nameEl.style.lineHeight='1.2';
       });
     });
   });
@@ -2762,6 +2820,11 @@ function buildSpotlightView(wi){
   }
   wrap.appendChild(rowsCont);
   main.appendChild(wrap);
+  // Initialize equal heights before applySpotlight runs, so transitions have a start value
+  requestAnimationFrame(()=>{
+    const h=rowsCont.clientHeight;
+    if(h&&nc)Array.from(rowsCont.querySelectorAll('.pres-sp-row')).forEach(r=>r.style.height=(h/nc)+'px');
+  });
 }
 
 function togglePresent(){

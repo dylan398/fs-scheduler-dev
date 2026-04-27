@@ -360,7 +360,7 @@ body.present-editor .brand{display:none}
 body.present-editor #theme-btn{display:none}
 body.present-editor .settings-pop{display:none!important}
 body.present-editor #present-btn{border-color:var(--yellow);color:var(--yellow)}
-body.present-viewer .hdr{height:32px;background:#080a0f;border-bottom:1px solid #1a1d26}
+body.present-viewer .hdr{height:32px;background:#07090e;border-bottom:1px solid #14171f}
 body.present-viewer .brand{display:none}
 body.present-viewer .sync{display:none}
 body.present-viewer #theme-btn{display:none}
@@ -369,85 +369,85 @@ body.present-viewer .pres-strip{display:none!important}
 body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{display:flex!important}
 
-/* ── Week container ───────────────────────────────────────────────────────── */
-.pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#0d1018;border:1px solid #1e2330}
+/* Week panel */
+.pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#07090e}
 
-/* ── Week header bar ──────────────────────────────────────────────────────── */
-.pres-bar{flex-shrink:0;background:#080a0f;display:flex;align-items:center;justify-content:space-between;padding:5px 14px;border-bottom:3px solid var(--yellow)}
+/* Header bar */
+.pres-bar{flex-shrink:0;background:#07090e;display:flex;align-items:center;justify-content:space-between;padding:5px 16px;border-bottom:2px solid #f5c842}
 .pres-bar.curr-bar{border-bottom-color:#1e2330}
 .pres-bar-left{display:flex;align-items:center;gap:10px}
-.pres-week-label{font-family:var(--font-d);font-weight:900;font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:3px 10px;background:var(--yellow);color:#000}
-.pres-week-label.curr{background:#1e2330;color:#555c70}
-.pres-week-dates{font-family:var(--font-d);font-weight:700;font-size:clamp(13px,1.4vh,18px);color:#e8eaf0;letter-spacing:.04em}
-.pres-bar-rev{font-family:var(--font-m);font-size:clamp(10px,1.1vh,13px);color:#6a7080;display:flex;gap:14px;align-items:center}
+.pres-week-label{font-family:var(--font-d);font-weight:900;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:3px 10px;background:#f5c842;color:#000}
+.pres-week-label.curr{background:#1a1d26;color:#3a4055}
+.pres-week-dates{font-family:var(--font-d);font-weight:700;font-size:clamp(13px,1.5vh,19px);color:#d0d4e0;letter-spacing:.04em}
+.pres-bar-rev{font-family:var(--font-m);font-size:clamp(10px,1.1vh,14px);color:#555c70;display:flex;gap:16px;align-items:center}
 .pres-bar-rev .inv{color:#3ecf8e;font-weight:700}
 .pres-bar-rev .sched{font-weight:700}
 
-/* ── Job strip (editor only) ──────────────────────────────────────────────── */
-.pres-strip{flex-shrink:0;background:#080a0f;border-bottom:1px solid #1a1d26;display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;gap:0;max-height:34px}
+/* Job strip — editor only */
+.pres-strip{flex-shrink:0;background:#07090e;border-bottom:1px solid #14171f;display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;gap:0;height:30px}
 .pres-strip::-webkit-scrollbar{height:2px}
 .pres-strip::-webkit-scrollbar-thumb{background:#2e3448}
-.pres-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-right:1px solid #1a1d26;border-left:4px solid transparent;flex-shrink:0;cursor:pointer;transition:background .1s;white-space:nowrap;height:100%}
-.pres-chip:hover{background:#13161e}
-.pres-chip-name{font-family:var(--font-d);font-weight:700;font-size:11px;color:#a0a8c0}
+.pres-chip{display:flex;align-items:center;gap:5px;padding:3px 10px;border-right:1px solid #14171f;border-left:4px solid transparent;flex-shrink:0;cursor:pointer;transition:background .1s;white-space:nowrap;height:100%}
+.pres-chip:hover{background:#10131a}
+.pres-chip-name{font-family:var(--font-d);font-weight:700;font-size:11px;color:#8a90a0}
 .pres-chip-pm{font-size:9px;color:#4a9eff;font-weight:700}
-.pres-chip-inv{font-family:var(--font-m);font-size:10px;color:#3a4055}
+.pres-chip-inv{font-family:var(--font-m);font-size:10px;color:#2e3448}
 .pres-chip-inv.has{color:#3ecf8e}
 .pres-chip-fin{font-size:9px;color:var(--orange);font-weight:700}
 
-/* ── Grid ─────────────────────────────────────────────────────────────────── */
+/* Grid */
 .pres-grid-outer{flex:1;min-height:0;overflow:hidden}
 .pres-grid{display:grid;height:100%}
 
-/* ── Day header cells ─────────────────────────────────────────────────────── */
-.pres-dh{background:#0d1018;border-right:1px solid #1e2330;border-bottom:2px solid #252a38;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px}
-.pres-dh.today{background:#0a1828;border-bottom-color:#2a4a7a}
-.pres-dh.sat{background:#0b0d12}
-.pres-dh .dn{font-family:var(--font-d);font-weight:900;font-size:clamp(12px,1.7vh,20px);letter-spacing:.1em;text-transform:uppercase;color:#c8d0e0;line-height:1}
-.pres-dh .dd{font-family:var(--font-m);font-size:clamp(8px,.95vh,12px);color:#3a4055;margin-top:2px;letter-spacing:.04em}
+/* Day headers */
+.pres-dh{background:#0b0d14;border-right:1px solid #14171f;border-bottom:2px solid #1e2330;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px}
+.pres-dh.today{background:#0a1626;border-bottom-color:#2a4a80}
+.pres-dh.sat{background:#09090e}
+.pres-dh .dn{font-family:var(--font-d);font-weight:900;font-size:clamp(11px,1.6vh,20px);letter-spacing:.1em;text-transform:uppercase;color:#b0b8cc;line-height:1}
+.pres-dh .dd{font-family:var(--font-m);font-size:clamp(8px,.95vh,12px);color:#2e3448;margin-top:2px}
 .pres-dh.today .dn{color:#5a9eff}
-.pres-dh.today .dd{color:#3a6090}
+.pres-dh.today .dd{color:#2a4a70}
 
-/* ── Corner ───────────────────────────────────────────────────────────────── */
-.pres-corner{background:#080a0f;border-right:2px solid #252a38;border-bottom:2px solid #252a38}
+/* Corner */
+.pres-corner{background:#07090e;border-right:2px solid #1e2330;border-bottom:2px solid #1e2330}
 
-/* ── Crew label cells ─────────────────────────────────────────────────────── */
-.pres-cl{background:#0a0c12;border-right:2px solid #252a38;border-bottom:1px solid #1a1d26;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 3px;overflow:hidden}
-.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(18px,2.6vh,34px);color:#f5c842;line-height:1;text-shadow:0 0 18px rgba(245,200,66,.35)}
-.pres-cl-names{font-family:var(--font-d);font-weight:600;font-size:11px;color:#5a6070;text-align:center;line-height:1.35;margin-top:3px;word-break:break-word;overflow:hidden}
+/* Crew label column */
+.pres-cl{background:#07090e;border-right:2px solid #1e2330;border-bottom:1px solid #14171f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;overflow:hidden}
+.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(18px,2.8vh,36px);color:#f5c842;line-height:1;text-shadow:0 0 20px rgba(245,200,66,.4)}
+.pres-cl-names{font-family:var(--font-d);font-weight:600;color:#3a4055;text-align:center;line-height:1.3;margin-top:2px;word-break:break-word;overflow:hidden}
 
-/* ── Job cells ────────────────────────────────────────────────────────────── */
-.pres-cell{border-right:1px solid #1a1d26;border-bottom:1px solid #1a1d26;background:#0f1218;padding:4px;overflow:hidden;position:relative;display:flex;flex-direction:column;gap:3px}
-.pres-cell.today{background:#0a1422;border-left:2px solid #1e3a6a;border-right:2px solid #1e3a6a}
-.pres-cell.sat{background:#0c0e13}
-.pres-cell.pres-empty{background:#0b0d12}
+/* Job cells — dark canvas, cards float on top */
+.pres-cell{border-right:1px solid #14171f;border-bottom:1px solid #14171f;background:#0b0d14;padding:3px;overflow:hidden;display:flex;flex-direction:column;gap:2px;justify-content:flex-start}
+.pres-cell.today{background:#091220;border-left:2px solid #1e3a6e;border-right:1px solid #14171f}
+.pres-cell.sat{background:#09090e}
+.pres-cell.pres-empty{background:#07090e}
 
-/* ── Job cards ────────────────────────────────────────────────────────────── */
-.pres-jcard{flex:1;min-height:0;border-left:8px solid #3a4055;background:#161a24;padding:8px 10px 6px 11px;overflow:hidden;position:relative;display:flex;flex-direction:column;border-radius:1px}
-.pres-jcard.night{background:#080c18;border-left-color:#4a5eff}
-.pres-jcard.oot:not(.night){background:#150a00;border-left-color:#d47800}
+/* Cards — LIGHT on dark grid, high contrast */
+.pres-jcard{flex:none;border-left:9px solid #3a4055;background:#dde1ec;padding:7px 9px 5px 10px;overflow:hidden;position:relative;display:flex;flex-direction:column;border-radius:1px}
+.pres-jcard.night{background:#0e1428;border-left-color:#4a6aee}
+.pres-jcard.oot:not(.night){background:#fff3e0;border-left-color:#d47800}
 
-/* ── Job name — JS overrides font-size after layout ──────────────────────── */
-.pres-jname{font-family:var(--font-d);font-weight:900;font-size:20px;color:#f0f2f8;line-height:1.1;overflow:hidden;padding-right:14px;word-break:break-word;letter-spacing:.01em}
-.pres-jcard.night .pres-jname{color:#a0b8e0}
-.pres-jcard.oot:not(.night) .pres-jname{color:#f4a830}
+/* Job name — dark text on light card */
+.pres-jname{font-family:var(--font-d);font-weight:900;font-size:20px;color:#141720;line-height:1.1;overflow:hidden;padding-right:12px;word-break:break-word;letter-spacing:.01em}
+.pres-jcard.night .pres-jname{color:#90b0e0}
+.pres-jcard.oot:not(.night) .pres-jname{color:#4a2800}
 
-/* ── Note ─────────────────────────────────────────────────────────────────── */
-.pres-jnote{font-size:12px;color:#4a5468;font-style:italic;overflow:hidden;margin-top:2px;word-break:break-word}
-.pres-jcard.night .pres-jnote{color:#3a4860}
-.pres-jcard.oot:not(.night) .pres-jnote{color:#6a4010}
+/* Note */
+.pres-jnote{font-size:12px;color:#5a6070;font-style:italic;overflow:hidden;margin-top:2px;word-break:break-word}
+.pres-jcard.night .pres-jnote{color:#4a6080}
+.pres-jcard.oot:not(.night) .pres-jnote{color:#7a4a10}
 
-/* ── Status footer ────────────────────────────────────────────────────────── */
-.pres-jfoot{display:flex;align-items:center;gap:4px;margin-top:4px;flex-shrink:0;flex-wrap:wrap}
-.pres-jstat{font-family:var(--font-d);font-weight:800;font-size:clamp(7px,.9vh,11px);letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:2px}
-.pres-jnight{font-size:clamp(9px,1.2vh,15px);line-height:1;opacity:.9}
+/* Status footer */
+.pres-jfoot{display:flex;align-items:center;gap:4px;margin-top:3px;flex-shrink:0;flex-wrap:wrap}
+.pres-jstat{font-family:var(--font-d);font-weight:800;font-size:clamp(7px,.85vh,10px);letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border-radius:2px;color:#fff}
+.pres-jnight{font-size:clamp(9px,1.1vh,14px);line-height:1}
 
-/* ── Remove / Add buttons ─────────────────────────────────────────────────── */
-.pres-jremove{position:absolute;top:3px;right:3px;background:rgba(255,255,255,.06);border:none;color:#3a4055;width:16px;height:16px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;border-radius:2px;transition:all .12s}
+/* Remove / Add */
+.pres-jremove{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.1);border:none;color:#8a90a0;width:15px;height:15px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;border-radius:2px;transition:all .12s}
 .pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.2)}
-.pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#1e2330;font-size:26px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:20px;transition:color .12s}
-.pres-add:hover{color:#3a4055}
-.pres-add.has-jobs{flex:0 0 14px;font-size:11px;min-height:0;color:#1e2330}
+.pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#14171f;font-size:22px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:16px;transition:color .12s}
+.pres-add:hover{color:#2e3448}
+.pres-add.has-jobs{flex:0 0 12px;font-size:10px;min-height:0;color:#14171f}
 
 /* ── SCHEDULED TO INVOICE ───────────────────────────────────────────────── */
 .sched-inv-block{display:flex;align-items:center;gap:5px;font-family:var(--font-m);font-size:11px;color:#8a90a0;cursor:pointer;padding-right:10px;border-right:1px solid #3a4055;transition:color .12s;flex-shrink:0}
@@ -1585,67 +1585,90 @@ function renderPresent(){
 
 function fitPresentCards(){
   requestAnimationFrame(()=>{
-    // ── Crew name font sizing ─────────────────────────────────────────────
-    document.querySelectorAll('.pres-cl').forEach(cl=>{
-      const h=cl.clientHeight;
-      const numEl=cl.querySelector('.pres-cl-num');
-      const namesEl=cl.querySelector('.pres-cl-names');
-      if(!namesEl||!h)return;
-      const numH=numEl?numEl.offsetHeight+4:0;
-      const avail=Math.max(8,h-numH-8);
-      // Count lines: innerHTML uses <br> as separator
-      const lineCount=namesEl.innerHTML.split('<br>').length||1;
-      const perLine=avail/lineCount;
-      const fs=Math.min(13,Math.max(7,perLine*0.7));
-      namesEl.style.fontSize=fs+'px';
-      namesEl.style.lineHeight=(fs<9?1.1:1.35).toString();
-    });
+    document.querySelectorAll('.pres-grid-outer').forEach(outer=>{
+      const grid=outer.querySelector('.pres-grid');
+      if(!grid)return;
 
-    // ── Card text sizing ──────────────────────────────────────────────────
-    document.querySelectorAll('.pres-jcard').forEach(card=>{
-      const h=card.clientHeight;
-      const w=card.clientWidth;
-      if(!h||!w)return;
-      const nameEl=card.querySelector('.pres-jname');
-      const noteEl=card.querySelector('.pres-jnote');
-      const footEl=card.querySelector('.pres-jfoot');
-      if(!nameEl)return;
+      // Measure actual available height
+      const totalH=outer.clientHeight;
+      const dayHdrEl=grid.querySelector('.pres-dh');
+      const dayHdrH=dayHdrEl?dayHdrEl.offsetHeight:34;
+      const availH=Math.max(10,totalH-dayHdrH);
 
-      const padV=14; // top+bottom internal padding
-      const footH=footEl?footEl.offsetHeight+4:0;
-      const avail=Math.max(10,h-padV-footH);
+      const crewCells=grid.querySelectorAll('.pres-cl');
+      const nc=crewCells.length;
+      if(!nc)return;
+      const rowH=availH/nc;
 
-      // Estimate lines the name will occupy at a given font size.
-      // Barlow Condensed Bold avg char width ≈ 0.52× font-size
-      const nameText=nameEl.textContent;
-      const cardInnerW=Math.max(40,w-34); // subtract border(7)+padding(12)+rm-btn(15)
+      // Find worst-case cell — most cards in any single cell
+      let maxCards=1;
+      grid.querySelectorAll('.pres-cell').forEach(cell=>{
+        const n=cell.querySelectorAll('.pres-jcard').length;
+        if(n>maxCards)maxCards=n;
+      });
 
-      // Solve: what font-size fills ~70% of avail height in the estimated line count?
-      // Iterate once: start with 1-line size, check if it fits width, adjust lines
-      let nameSize=Math.min(30,Math.max(10,avail*0.7));
-      const estLineWidth=nameText.length*nameSize*0.52;
-      const linesEst=estLineWidth>cardInnerW*1.05?2:1;
-      if(linesEst===2) nameSize=Math.min(30,Math.max(10,avail*0.58));
-      // Hard cap: name block shouldn't exceed 80% of available height
-      const maxByHeight=avail*0.80/linesEst;
-      nameSize=Math.min(nameSize,maxByHeight);
+      // All cards same height: row height divided by worst-case count
+      // Subtract cell gap (2px per card gap) and cell padding (6px total)
+      const cardH=Math.max(24,(rowH-6)/maxCards-2);
 
-      nameEl.style.fontSize=nameSize+'px';
-      nameEl.style.lineHeight='1.15';
+      // Font sizing from card height
+      const padV=12; // top+bottom padding inside card
+      const avail=Math.max(8,cardH-padV);
 
-      // Note: show if there's genuine room after the name block
-      if(noteEl){
-        const nameBlock=nameSize*1.15*linesEst;
-        const remaining=avail-nameBlock-4;
-        if(remaining>=11){
-          const noteSize=Math.min(13,Math.max(8,nameSize*0.58));
-          noteEl.style.fontSize=noteSize+'px';
-          noteEl.style.color='#5a6478';
-          noteEl.style.display='';
-        }else{
-          noteEl.style.display='none';
-        }
-      }
+      grid.querySelectorAll('.pres-cell').forEach(cell=>{
+        cell.querySelectorAll('.pres-jcard').forEach(card=>{
+          // Override flex:1 with explicit height — uniform across all cards
+          card.style.flex='none';
+          card.style.height=cardH+'px';
+          card.style.minHeight='unset';
+
+          const nameEl=card.querySelector('.pres-jname');
+          const noteEl=card.querySelector('.pres-jnote');
+          const footEl=card.querySelector('.pres-jfoot');
+          if(!nameEl)return;
+
+          const footH=footEl?footEl.offsetHeight+3:0;
+          const nameAvail=Math.max(8,avail-footH);
+
+          // Width-aware wrapping estimate
+          const cardW=Math.max(40,card.clientWidth-28);
+          let nameSize=Math.min(28,Math.max(9,nameAvail*0.88));
+          const estW=nameEl.textContent.length*nameSize*0.52;
+          const lines=estW>cardW*1.05?2:1;
+          if(lines===2)nameSize=Math.min(28,Math.max(9,nameAvail*0.52));
+          // Cap: name block can't exceed 85% of nameAvail
+          nameSize=Math.min(nameSize,(nameAvail*0.85)/lines);
+
+          nameEl.style.fontSize=nameSize+'px';
+          nameEl.style.lineHeight='1.1';
+
+          if(noteEl){
+            const nameBlock=nameSize*1.1*lines;
+            const noteAvail=nameAvail-nameBlock-3;
+            if(noteAvail>=9){
+              const noteSize=Math.max(8,Math.min(13,nameSize*0.6));
+              noteEl.style.fontSize=noteSize+'px';
+              noteEl.style.display='';
+            }else{
+              noteEl.style.display='none';
+            }
+          }
+        });
+      });
+
+      // Crew name font sizing
+      crewCells.forEach(cl=>{
+        const namesEl=cl.querySelector('.pres-cl-names');
+        if(!namesEl)return;
+        const numEl=cl.querySelector('.pres-cl-num');
+        const numH=numEl?numEl.offsetHeight+3:0;
+        const clAvail=Math.max(8,rowH-numH-8);
+        const lineCount=namesEl.innerHTML.split('<br>').length||1;
+        const perLine=clAvail/lineCount;
+        const fs=Math.min(14,Math.max(7,perLine*0.68));
+        namesEl.style.fontSize=fs+'px';
+        namesEl.style.lineHeight=(fs<9?1.1:1.3).toString();
+      });
     });
   });
 }
@@ -1769,7 +1792,7 @@ function buildPresentWeek(wi, isNext){
           card.style.borderLeftColor=jc;
           const hex=jc.replace('#','');
           const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
-          if(!j.night&&!j.oot) card.style.background=`linear-gradient(135deg,rgba(${r},${g},${b},0.18) 0%,rgba(${r},${g},${b},0.06) 100%)`;
+          if(!j.night&&!j.oot) card.style.background=`linear-gradient(135deg,rgba(${r},${g},${b},0.22) 0%,rgba(${r},${g},${b},0.08) 100%), #dde1ec`;
         }
         // Status badge — solid background for TV legibility
         const statColors={working:null,punch:'#d4a017',free:'#1a7a50',standby:'#5a3aaa'};

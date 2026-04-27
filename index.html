@@ -354,99 +354,100 @@ body.dark .jcard.oot:not(.night){background:#1e0e00}
 .cswatch.none-swatch::after{content:'×';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#8a90a0;font-size:13px;line-height:1}
 
 /* ── PRESENTATION MODE ──────────────────────────────────────────────────── */
-/* Body-level locks — all layout is handled by renderPresent() */
 body.present-editor,body.present-viewer{overflow:hidden}
 body.present-editor .hdr{height:38px}
 body.present-editor .brand{display:none}
 body.present-editor #theme-btn{display:none}
 body.present-editor .settings-pop{display:none!important}
 body.present-editor #present-btn{border-color:var(--yellow);color:var(--yellow)}
-body.present-viewer .hdr{height:32px;background:#0d0f14;border-bottom:1px solid #1e2330}
+body.present-viewer .hdr{height:32px;background:#080a0f;border-bottom:1px solid #1a1d26}
 body.present-viewer .brand{display:none}
 body.present-viewer .sync{display:none}
 body.present-viewer #theme-btn{display:none}
 body.present-viewer #settings-btn{display:none}
+body.present-viewer .pres-strip{display:none!important}
 body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{display:flex!important}
-/* pres-main fills everything below the header */
-.pres-main{display:flex;flex-direction:row;gap:3px;background:#0d0f14;padding:3px;overflow:hidden}
-.pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-board);border:1px solid var(--grid-dark)}
-.pres-week.dark-mode{background:#1a1d26;border-color:#2e3448}
-.pres-bar{flex-shrink:0;background:#13161e;display:flex;align-items:center;justify-content:space-between;padding:4px 10px;border-bottom:2px solid var(--yellow)}
-.pres-bar.curr-bar{border-bottom-color:#3a4055}
-.pres-bar-left{display:flex;align-items:center;gap:8px}
-.pres-week-label{font-family:var(--font-d);font-weight:900;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;background:var(--yellow);color:#000}
-.pres-week-label.curr{background:#2e3448;color:#8a90a0}
-.pres-week-dates{font-family:var(--font-d);font-weight:700;font-size:13px;color:#e8eaf0;letter-spacing:.03em}
-.pres-bar-rev{font-family:var(--font-m);font-size:11px;color:#8a90a0;display:flex;gap:12px;align-items:center}
-.pres-bar-rev .inv{color:var(--green);font-weight:600}
-/* Job strip in present mode */
-.pres-strip{flex-shrink:0;background:#191d28;border-bottom:1px solid #252a38;display:flex;align-items:center;flex-wrap:wrap;overflow:visible;gap:0}
+
+/* ── Week container ───────────────────────────────────────────────────────── */
+.pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#0d1018;border:1px solid #1e2330}
+
+/* ── Week header bar ──────────────────────────────────────────────────────── */
+.pres-bar{flex-shrink:0;background:#080a0f;display:flex;align-items:center;justify-content:space-between;padding:5px 14px;border-bottom:3px solid var(--yellow)}
+.pres-bar.curr-bar{border-bottom-color:#1e2330}
+.pres-bar-left{display:flex;align-items:center;gap:10px}
+.pres-week-label{font-family:var(--font-d);font-weight:900;font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:3px 10px;background:var(--yellow);color:#000}
+.pres-week-label.curr{background:#1e2330;color:#555c70}
+.pres-week-dates{font-family:var(--font-d);font-weight:700;font-size:clamp(13px,1.4vh,18px);color:#e8eaf0;letter-spacing:.04em}
+.pres-bar-rev{font-family:var(--font-m);font-size:clamp(10px,1.1vh,13px);color:#6a7080;display:flex;gap:14px;align-items:center}
+.pres-bar-rev .inv{color:#3ecf8e;font-weight:700}
+.pres-bar-rev .sched{font-weight:700}
+
+/* ── Job strip (editor only) ──────────────────────────────────────────────── */
+.pres-strip{flex-shrink:0;background:#080a0f;border-bottom:1px solid #1a1d26;display:flex;align-items:center;overflow-x:auto;overflow-y:hidden;gap:0;max-height:34px}
 .pres-strip::-webkit-scrollbar{height:2px}
-.pres-strip::-webkit-scrollbar-thumb{background:#3a4055}
-.pres-chip{display:flex;align-items:center;gap:5px;padding:4px 8px;border-right:1px solid #252a38;border-left:3px solid transparent;flex-shrink:0;cursor:pointer;transition:background .1s;white-space:nowrap}
-.pres-chip:hover{background:#1e2330}
-.pres-chip-name{font-family:var(--font-d);font-weight:700;font-size:11px;color:#c8cad4}
-.pres-chip-pm{font-size:9px;color:#4a9eff;font-weight:700;margin-left:2px}
+.pres-strip::-webkit-scrollbar-thumb{background:#2e3448}
+.pres-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-right:1px solid #1a1d26;border-left:4px solid transparent;flex-shrink:0;cursor:pointer;transition:background .1s;white-space:nowrap;height:100%}
+.pres-chip:hover{background:#13161e}
+.pres-chip-name{font-family:var(--font-d);font-weight:700;font-size:11px;color:#a0a8c0}
+.pres-chip-pm{font-size:9px;color:#4a9eff;font-weight:700}
 .pres-chip-inv{font-family:var(--font-m);font-size:10px;color:#3a4055}
-.pres-chip-inv.has{color:var(--green)}
-.pres-chip-fin{font-size:9px;color:var(--orange);font-weight:700;margin-left:3px}
-/* Grid */
+.pres-chip-inv.has{color:#3ecf8e}
+.pres-chip-fin{font-size:9px;color:var(--orange);font-weight:700}
+
+/* ── Grid ─────────────────────────────────────────────────────────────────── */
 .pres-grid-outer{flex:1;min-height:0;overflow:hidden}
 .pres-grid{display:grid;height:100%}
-/* Day header cells */
-.pres-dh{background:#ece8e1;border-right:1px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px}
-.pres-dh.today{background:#deeaff}
-.pres-dh.sat{background:#f0ede5}
-.pres-dh .dn{font-family:var(--font-d);font-weight:800;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:#3a3530;line-height:1}
-.pres-dh .dd{font-family:var(--font-m);font-size:10px;color:var(--txt-muted);margin-top:1px}
-.pres-dh.today .dn{color:#1a5fa0}
-/* Corner */
-.pres-corner{background:#e4e0d8;border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark)}
-/* Crew label cells */
-.pres-cl{background:var(--crew-col);border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 3px;overflow:hidden}
-.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:24px;color:#3a3530;line-height:1}
-.pres-cl-names{font-size:11px;color:var(--txt-muted);text-align:center;line-height:1.4;margin-top:3px;word-break:break-word;overflow:hidden}
-/* Job cells */
-.pres-cell{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);background:#fff;padding:3px;overflow:hidden;position:relative;display:flex;flex-direction:column;gap:2px}
-.pres-cell.today{background:#edf4ff}
-.pres-cell.sat{background:#faf8f3}
-.pres-cell.pres-empty{background:#f2efe8}
-/* Card base — fills available cell height equally */
-.pres-jcard{flex:1;min-height:0;border-left:7px solid #c4bfb6;background:#faf8f5;padding:8px 10px 6px 12px;overflow:hidden;position:relative;display:flex;flex-direction:column}
-.pres-jcard.night{background:#191d2a}
-/* Job name — JS sets font-size after render */
-.pres-jname{font-family:var(--font-d);font-weight:800;font-size:20px;color:#1a1714;line-height:1.15;overflow:hidden;padding-right:14px;word-break:break-word}
-.pres-jcard.night .pres-jname{color:#c8d0e0}
-/* Note */
-.pres-jnote{font-size:12px;color:#7a7470;font-style:italic;overflow:hidden;margin-top:3px;word-break:break-word}
-.pres-jcard.night .pres-jnote{color:#8090a8}
-/* Status footer */
-.pres-jfoot{display:flex;align-items:center;gap:5px;margin-top:4px;flex-shrink:0}
-.pres-jstat{font-family:var(--font-d);font-weight:800;font-size:clamp(8px,1vh,12px);letter-spacing:.07em;text-transform:uppercase;padding:2px 6px;border:1px solid currentColor}
-.pres-jnight{font-size:clamp(10px,1.3vh,16px);line-height:1}
-/* Remove button */
-.pres-jremove{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.1);border:none;color:#bbb;width:17px;height:17px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}
-.pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.18)}
-/* Add button */
-.pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#cac6bc;font-size:28px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:20px;transition:color .12s}
-.pres-add:hover{color:#999590}
-.pres-add.has-jobs{flex:0 0 16px;font-size:13px;min-height:0;color:#ddd9d0}
-/* Dark mode */
-body.dark .pres-week{background:#1a1d26;border-color:#2e3448}
-body.dark .pres-dh{background:#252a38;border-color:#3a4055}
-body.dark .pres-dh .dn{color:#a0a8c0}
-body.dark .pres-dh .dd{color:#555c70}
-body.dark .pres-dh.today{background:#162035}
-body.dark .pres-corner{background:#1e2330}
-body.dark .pres-cl{background:#252a38;border-color:#3a4055}
-body.dark .pres-cl-num{color:#a0a8c0}
-body.dark .pres-cl-names{color:#555c70}
-body.dark .pres-cell{background:#1e2330;border-color:#2e3448}
-body.dark .pres-cell.today{background:#162035}
-body.dark .pres-cell.pres-empty{background:#181c28}
-body.dark .pres-jcard{background:#252a38}
-body.dark .pres-jcard:not(.night){background:#252a38}
+
+/* ── Day header cells ─────────────────────────────────────────────────────── */
+.pres-dh{background:#0d1018;border-right:1px solid #1e2330;border-bottom:2px solid #252a38;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px}
+.pres-dh.today{background:#0a1828;border-bottom-color:#2a4a7a}
+.pres-dh.sat{background:#0b0d12}
+.pres-dh .dn{font-family:var(--font-d);font-weight:900;font-size:clamp(12px,1.7vh,20px);letter-spacing:.1em;text-transform:uppercase;color:#c8d0e0;line-height:1}
+.pres-dh .dd{font-family:var(--font-m);font-size:clamp(8px,.95vh,12px);color:#3a4055;margin-top:2px;letter-spacing:.04em}
+.pres-dh.today .dn{color:#5a9eff}
+.pres-dh.today .dd{color:#3a6090}
+
+/* ── Corner ───────────────────────────────────────────────────────────────── */
+.pres-corner{background:#080a0f;border-right:2px solid #252a38;border-bottom:2px solid #252a38}
+
+/* ── Crew label cells ─────────────────────────────────────────────────────── */
+.pres-cl{background:#0a0c12;border-right:2px solid #252a38;border-bottom:1px solid #1a1d26;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 3px;overflow:hidden}
+.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(18px,2.6vh,34px);color:#f5c842;line-height:1;text-shadow:0 0 18px rgba(245,200,66,.35)}
+.pres-cl-names{font-family:var(--font-d);font-weight:600;font-size:11px;color:#5a6070;text-align:center;line-height:1.35;margin-top:3px;word-break:break-word;overflow:hidden}
+
+/* ── Job cells ────────────────────────────────────────────────────────────── */
+.pres-cell{border-right:1px solid #1a1d26;border-bottom:1px solid #1a1d26;background:#0f1218;padding:4px;overflow:hidden;position:relative;display:flex;flex-direction:column;gap:3px}
+.pres-cell.today{background:#0a1422;border-left:2px solid #1e3a6a;border-right:2px solid #1e3a6a}
+.pres-cell.sat{background:#0c0e13}
+.pres-cell.pres-empty{background:#0b0d12}
+
+/* ── Job cards ────────────────────────────────────────────────────────────── */
+.pres-jcard{flex:1;min-height:0;border-left:8px solid #3a4055;background:#161a24;padding:8px 10px 6px 11px;overflow:hidden;position:relative;display:flex;flex-direction:column;border-radius:1px}
+.pres-jcard.night{background:#080c18;border-left-color:#4a5eff}
+.pres-jcard.oot:not(.night){background:#150a00;border-left-color:#d47800}
+
+/* ── Job name — JS overrides font-size after layout ──────────────────────── */
+.pres-jname{font-family:var(--font-d);font-weight:900;font-size:20px;color:#f0f2f8;line-height:1.1;overflow:hidden;padding-right:14px;word-break:break-word;letter-spacing:.01em}
+.pres-jcard.night .pres-jname{color:#a0b8e0}
+.pres-jcard.oot:not(.night) .pres-jname{color:#f4a830}
+
+/* ── Note ─────────────────────────────────────────────────────────────────── */
+.pres-jnote{font-size:12px;color:#4a5468;font-style:italic;overflow:hidden;margin-top:2px;word-break:break-word}
+.pres-jcard.night .pres-jnote{color:#3a4860}
+.pres-jcard.oot:not(.night) .pres-jnote{color:#6a4010}
+
+/* ── Status footer ────────────────────────────────────────────────────────── */
+.pres-jfoot{display:flex;align-items:center;gap:4px;margin-top:4px;flex-shrink:0;flex-wrap:wrap}
+.pres-jstat{font-family:var(--font-d);font-weight:800;font-size:clamp(7px,.9vh,11px);letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:2px}
+.pres-jnight{font-size:clamp(9px,1.2vh,15px);line-height:1;opacity:.9}
+
+/* ── Remove / Add buttons ─────────────────────────────────────────────────── */
+.pres-jremove{position:absolute;top:3px;right:3px;background:rgba(255,255,255,.06);border:none;color:#3a4055;width:16px;height:16px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;border-radius:2px;transition:all .12s}
+.pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.2)}
+.pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#1e2330;font-size:26px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:20px;transition:color .12s}
+.pres-add:hover{color:#3a4055}
+.pres-add.has-jobs{flex:0 0 14px;font-size:11px;min-height:0;color:#1e2330}
 
 /* ── SCHEDULED TO INVOICE ───────────────────────────────────────────────── */
 .sched-inv-block{display:flex;align-items:center;gap:5px;font-family:var(--font-m);font-size:11px;color:#8a90a0;cursor:pointer;padding-right:10px;border-right:1px solid #3a4055;transition:color .12s;flex-shrink:0}
@@ -1564,7 +1565,7 @@ function renderPresent(){
   const main=document.getElementById('main');
   main.innerHTML='';
   // Full-height flex row container
-  main.style.cssText='display:flex;flex-direction:row;gap:4px;padding:4px;overflow:hidden;background:#0d0f14;height:100%;box-sizing:border-box';
+  main.style.cssText='display:flex;flex-direction:row;gap:3px;padding:3px;overflow:hidden;background:#080a0f;height:100%;box-sizing:border-box';
 
   while(S.weeks.length<=S.viewIdx+1)addNextWeek();
   syncJobSummary(S.viewIdx);
@@ -1583,51 +1584,63 @@ function renderPresent(){
 }
 
 function fitPresentCards(){
-  // Wait one frame so the browser has done layout
   requestAnimationFrame(()=>{
-    // ── Crew name font sizing ─────────────────────────────────────
+    // ── Crew name font sizing ─────────────────────────────────────────────
     document.querySelectorAll('.pres-cl').forEach(cl=>{
       const h=cl.clientHeight;
       const numEl=cl.querySelector('.pres-cl-num');
       const namesEl=cl.querySelector('.pres-cl-names');
       if(!namesEl||!h)return;
-      // Scale name list font so all names fit in remaining height
-      const numH=numEl?numEl.offsetHeight+3:0;
-      const avail=Math.max(10,h-numH-8);
-      const lines=namesEl.textContent.split('\n').filter(Boolean).length||1;
-      const perLine=avail/lines;
-      namesEl.style.fontSize=Math.min(14,Math.max(8,perLine*0.72))+'px';
-      namesEl.style.lineHeight=(perLine*0.72<10?1.1:1.35).toString();
+      const numH=numEl?numEl.offsetHeight+4:0;
+      const avail=Math.max(8,h-numH-8);
+      // Count lines: innerHTML uses <br> as separator
+      const lineCount=namesEl.innerHTML.split('<br>').length||1;
+      const perLine=avail/lineCount;
+      const fs=Math.min(13,Math.max(7,perLine*0.7));
+      namesEl.style.fontSize=fs+'px';
+      namesEl.style.lineHeight=(fs<9?1.1:1.35).toString();
     });
 
-    // ── Card text sizing ──────────────────────────────────────────
+    // ── Card text sizing ──────────────────────────────────────────────────
     document.querySelectorAll('.pres-jcard').forEach(card=>{
       const h=card.clientHeight;
-      if(!h)return;
+      const w=card.clientWidth;
+      if(!h||!w)return;
       const nameEl=card.querySelector('.pres-jname');
       const noteEl=card.querySelector('.pres-jnote');
       const footEl=card.querySelector('.pres-jfoot');
       if(!nameEl)return;
 
-      const padV=14;  // top+bottom padding
+      const padV=14; // top+bottom internal padding
       const footH=footEl?footEl.offsetHeight+4:0;
-      const avail=Math.max(12,h-padV-footH);
+      const avail=Math.max(10,h-padV-footH);
 
-      // Name gets up to 70% of available vertical space
-      // Allow wrapping: estimate 2 lines if name is long
-      const nameChars=nameEl.textContent.length;
-      const linesEst=nameChars>18?2:1;
-      const nameSize=Math.min(28,Math.max(10,avail*0.65/linesEst));
+      // Estimate lines the name will occupy at a given font size.
+      // Barlow Condensed Bold avg char width ≈ 0.52× font-size
+      const nameText=nameEl.textContent;
+      const cardInnerW=Math.max(40,w-34); // subtract border(7)+padding(12)+rm-btn(15)
+
+      // Solve: what font-size fills ~70% of avail height in the estimated line count?
+      // Iterate once: start with 1-line size, check if it fits width, adjust lines
+      let nameSize=Math.min(30,Math.max(10,avail*0.7));
+      const estLineWidth=nameText.length*nameSize*0.52;
+      const linesEst=estLineWidth>cardInnerW*1.05?2:1;
+      if(linesEst===2) nameSize=Math.min(30,Math.max(10,avail*0.58));
+      // Hard cap: name block shouldn't exceed 80% of available height
+      const maxByHeight=avail*0.80/linesEst;
+      nameSize=Math.min(nameSize,maxByHeight);
+
       nameEl.style.fontSize=nameSize+'px';
       nameEl.style.lineHeight='1.15';
 
-      // Note: show if enough room remains after name
+      // Note: show if there's genuine room after the name block
       if(noteEl){
-        const usedByName=nameSize*1.15*linesEst;
-        const remaining=avail-usedByName-4;
-        if(remaining>=10){
-          const noteSize=Math.min(14,Math.max(9,nameSize*0.62));
+        const nameBlock=nameSize*1.15*linesEst;
+        const remaining=avail-nameBlock-4;
+        if(remaining>=11){
+          const noteSize=Math.min(13,Math.max(8,nameSize*0.58));
           noteEl.style.fontSize=noteSize+'px';
+          noteEl.style.color='#5a6478';
           noteEl.style.display='';
         }else{
           noteEl.style.display='none';
@@ -1638,31 +1651,30 @@ function fitPresentCards(){
 }
 
 function buildPresentWeek(wi, isNext){
+  const wk=S.weeks[wi];
   const nd=wk.hasSunday?7:6;
   ensureA(wi);
-  const isDark=document.body.classList.contains('dark');
   const curIdx=currentWeekIdx(S.weeks);
   const isThisWeek=(wi===curIdx), isNextWeek=(wi===curIdx+1);
   const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
 
-  // ── Week panel ──────────────────────────────────────────────────────────
+  // ── Week panel ─────────────────────────────────────────────────────────────
   const panel=document.createElement('div');
-  panel.className='pres-week'+(isDark?' dark-mode':'');
-  panel.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;border-radius:2px';
+  panel.className='pres-week';
+  panel.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden';
 
-  // ── Header bar ──────────────────────────────────────────────────────────
+  // ── Header bar ─────────────────────────────────────────────────────────────
   const wInv=calcWeekInv(wk), wSched=calcWeekSched(wk,nd);
   const tgt=wk.target||0;
-  const schedColor=tgt>0?(wSched>=tgt?'#2db87a':wSched>=tgt*.75?'#d4a017':'#e05252'):'#8a90a0';
+  const schedColor=tgt>0?(wSched>=tgt?'#3ecf8e':wSched>=tgt*.75?'#f5c842':'#e05252'):'#f5c842';
   const labelHtml=isNextWeek
     ?`<span class="pres-week-label">NEXT WEEK</span>`
     :isThisWeek?`<span class="pres-week-label curr">THIS WEEK</span>`:'';
   const bar=document.createElement('div');
   bar.className='pres-bar'+(isThisWeek?' curr-bar':'');
-  // Viewer mode: hide all dollar amounts
   const showMoney=!(_presentMode==='viewer');
   const moneyHtml=showMoney
-    ?`<div class="pres-bar-rev"><span style="color:${schedColor}">$${fmt(wSched)}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>`
+    ?`<div class="pres-bar-rev"><span class="sched" style="color:${schedColor}">Sched: $${fmt(wSched)}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>`
     :'';
   bar.innerHTML=`<div class="pres-bar-left">${labelHtml}<span class="pres-week-dates">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div>${moneyHtml}`;
   panel.appendChild(bar);
@@ -1752,29 +1764,30 @@ function buildPresentWeek(wi, isNext){
         const card=document.createElement('div');
         // Scale down card density based on how many jobs share the cell
         card.className='pres-jcard'+(j.night?' night':'')+(j.oot?' oot':'');
-        // Thick left border + subtle background tint from job color
+        // Job color: thick left border + rich background tint
         if(jc){
           card.style.borderLeftColor=jc;
           const hex=jc.replace('#','');
           const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
-          if(!j.night&&!j.oot) card.style.background=`rgba(${r},${g},${b},0.13)`;
+          if(!j.night&&!j.oot) card.style.background=`linear-gradient(135deg,rgba(${r},${g},${b},0.18) 0%,rgba(${r},${g},${b},0.06) 100%)`;
         }
-        // Status badge (skip 'working' — that's the default)
-        const statColors={working:'#4a9eff',punch:'#d4a017',free:'#2db87a',standby:'#9b6dff'};
-        const statLabels={punch:'Punch',free:'Change Order',standby:'Sub'};
+        // Status badge — solid background for TV legibility
+        const statColors={working:null,punch:'#d4a017',free:'#1a7a50',standby:'#5a3aaa'};
+        const statLabels={punch:'Punch',free:'Change Order',standby:'🪖 Sub'};
         const statLabel=statLabels[j.s]||'';
-        const statColor=statColors[j.s]||'#4a9eff';
+        const statBg=statColors[j.s]||null;
         const pInstNum=getInstanceNum(j.job,wi,ci,di,ji);
         const footHtml=(statLabel||j.night||j.oot||pInstNum)
           ?`<div class="pres-jfoot">`
             +(j.night?`<span class="pres-jnight">🌙</span>`:'')
-            +(j.oot?`<span>🛣️</span>`:'')
-            +(statLabel?`<span class="pres-jstat" style="background:${statColor}22;color:${statColor}">${statLabel}</span>`:'')
-            +(pInstNum?`<span style="font-family:var(--font-m);font-size:9px;color:#6a7080;margin-left:auto">#${pInstNum}</span>`:'')
+            +(j.oot?`<span class="pres-jnight">🛣️</span>`:'')
+            +(statLabel&&statBg?`<span class="pres-jstat" style="background:${statBg};color:#fff">${statLabel}</span>`:'')
+            +(pInstNum?`<span style="font-family:var(--font-m);font-size:9px;color:#3a4055;margin-left:auto">#${pInstNum}</span>`:'')
             +`</div>`
           :'';
         card.innerHTML=`<div class="pres-jname">${esc(j.job)}</div>`
           +(j.note?`<div class="pres-jnote">${esc(j.note)}</div>`:'')
+          +footHtml;
           +footHtml;
         if(!VIEWER_MODE){
           const rm=document.createElement('button');

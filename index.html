@@ -384,7 +384,7 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 /* Crew rows container */
 .pres-sp-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 /* Individual crew row */
-.pres-sp-row{display:flex;flex:1;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:height .8s cubic-bezier(.4,0,.2,1)}
+.pres-sp-row{display:flex;flex:1;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:flex-basis .8s cubic-bezier(.4,0,.2,1)}
 .pres-sp-row:last-child{border-bottom:none}
 /* Crew label cell */
 .pres-sp-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;border-left:3px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;overflow:hidden;position:relative;transition:border-left-color .4s,background .4s}
@@ -2625,12 +2625,10 @@ function startSpotlight(wi){
     const rows=Array.from(document.querySelectorAll('.pres-sp-row'));
     rows.forEach(r=>{
       r.style.transition='none';
-      r.style.height=r.clientHeight+'px';
+      r.style.flex=`0 0 ${r.clientHeight}px`;
     });
-    // Force reflow to commit these heights into CSSOM before re-enabling transitions
-    rows.forEach(r=>r.offsetHeight);
+    rows.forEach(r=>r.offsetHeight); // force reflow to commit values
     rows.forEach(r=>r.style.transition='');
-    // rAF 2: now change heights — CSS transition fires from committed values
     requestAnimationFrame(()=>applySpotlight());
   });
 }
@@ -2688,9 +2686,10 @@ function fitSpotlightCards(){
   // ── Calculate non-spotlight row height ───────────────────────────────
   const otherRowH=nc>1?Math.max(36,(totalH-spotH)/(nc-1)):0;
 
-  // ── Set all row heights explicitly (enables CSS height transition) ───
+  // ── Set all row sizes via flex-basis (height:Xpx ignored by flex algorithm) ──
   rows.forEach(row=>{
-    row.style.height=(row.classList.contains('spotlight')?spotH:otherRowH)+'px';
+    const h=row.classList.contains('spotlight')?spotH:otherRowH;
+    row.style.flex=`0 0 ${h}px`;
   });
 
   // ── Pass 2: Non-spotlight — largest font fitting full name ───────────
@@ -2706,7 +2705,7 @@ function fitSpotlightCards(){
       const cellW=Math.max(60,cell.clientWidth-6);
       const cardW=Math.max(40,cellW-22);
       cards.forEach(card=>{
-        card.style.flex='none';card.style.height=cardH+'px';card.style.minHeight='unset';
+        card.style.flex=`0 0 ${cardH}px`;card.style.minHeight='unset';
         const nameEl=card.querySelector('.pres-jname');
         const noteEl=card.querySelector('.pres-jnote');
         const footEl=card.querySelector('.pres-jfoot');

@@ -404,10 +404,9 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 /* Corner */
 .pres-corner{background:#e4e0d8;border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid-dark)}
 /* Crew label cells */
-.pres-cl{background:var(--crew-col);border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:3px;overflow:hidden}
-.pres-cl:hover{background:#dedad2}
-.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:28px;color:#3a3530;line-height:1}
-.pres-cl-names{font-size:10px;color:var(--txt-muted);text-align:center;line-height:1.45;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px}
+.pres-cl{background:var(--crew-col);border-right:2px solid var(--grid-dark);border-bottom:1px solid var(--grid);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 3px;overflow:hidden}
+.pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:24px;color:#3a3530;line-height:1}
+.pres-cl-names{font-size:11px;color:var(--txt-muted);text-align:center;line-height:1.4;margin-top:3px;word-break:break-word;overflow:hidden}
 /* Job cells */
 .pres-cell{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);background:#fff;padding:3px;overflow:hidden;position:relative;display:flex;flex-direction:column;gap:2px}
 .pres-cell.today{background:#edf4ff}
@@ -416,11 +415,11 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 /* Card base — fills available cell height equally */
 .pres-jcard{flex:1;min-height:0;border-left:7px solid #c4bfb6;background:#faf8f5;padding:8px 10px 6px 12px;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .pres-jcard.night{background:#191d2a}
-/* Job name — scales with TV resolution via vh */
-.pres-jname{font-family:var(--font-d);font-weight:800;font-size:clamp(13px,2.2vh,30px);color:#1a1714;line-height:1.15;overflow:hidden;padding-right:16px;word-break:break-word}
+/* Job name — JS sets font-size after render */
+.pres-jname{font-family:var(--font-d);font-weight:800;font-size:20px;color:#1a1714;line-height:1.15;overflow:hidden;padding-right:14px;word-break:break-word}
 .pres-jcard.night .pres-jname{color:#c8d0e0}
-/* Note — visible, scales down gracefully */
-.pres-jnote{font-size:clamp(10px,1.3vh,16px);color:#7a7470;font-style:italic;overflow:hidden;margin-top:3px;word-break:break-word}
+/* Note */
+.pres-jnote{font-size:12px;color:#7a7470;font-style:italic;overflow:hidden;margin-top:3px;word-break:break-word}
 .pres-jcard.night .pres-jnote{color:#8090a8}
 /* Status footer */
 .pres-jfoot{display:flex;align-items:center;gap:5px;margin-top:4px;flex-shrink:0}
@@ -1161,6 +1160,7 @@ function doLogout() {
 // ── BOOT ─────────────────────────────────────────────────────────────────
 // Show login on first load. doLogin() will call initFirebase() on success.
 showLogin();
+window.addEventListener('resize',()=>{if(_presentMode)fitPresentCards();});
 
 
 
@@ -1579,10 +1579,65 @@ function renderPresent(){
   }
 
   if(_pendingSave){_pendingSave=false;setTimeout(save,200);}
+  fitPresentCards();
+}
+
+function fitPresentCards(){
+  // Wait one frame so the browser has done layout
+  requestAnimationFrame(()=>{
+    // ── Crew name font sizing ─────────────────────────────────────
+    document.querySelectorAll('.pres-cl').forEach(cl=>{
+      const h=cl.clientHeight;
+      const numEl=cl.querySelector('.pres-cl-num');
+      const namesEl=cl.querySelector('.pres-cl-names');
+      if(!namesEl||!h)return;
+      // Scale name list font so all names fit in remaining height
+      const numH=numEl?numEl.offsetHeight+3:0;
+      const avail=Math.max(10,h-numH-8);
+      const lines=namesEl.textContent.split('\n').filter(Boolean).length||1;
+      const perLine=avail/lines;
+      namesEl.style.fontSize=Math.min(14,Math.max(8,perLine*0.72))+'px';
+      namesEl.style.lineHeight=(perLine*0.72<10?1.1:1.35).toString();
+    });
+
+    // ── Card text sizing ──────────────────────────────────────────
+    document.querySelectorAll('.pres-jcard').forEach(card=>{
+      const h=card.clientHeight;
+      if(!h)return;
+      const nameEl=card.querySelector('.pres-jname');
+      const noteEl=card.querySelector('.pres-jnote');
+      const footEl=card.querySelector('.pres-jfoot');
+      if(!nameEl)return;
+
+      const padV=14;  // top+bottom padding
+      const footH=footEl?footEl.offsetHeight+4:0;
+      const avail=Math.max(12,h-padV-footH);
+
+      // Name gets up to 70% of available vertical space
+      // Allow wrapping: estimate 2 lines if name is long
+      const nameChars=nameEl.textContent.length;
+      const linesEst=nameChars>18?2:1;
+      const nameSize=Math.min(28,Math.max(10,avail*0.65/linesEst));
+      nameEl.style.fontSize=nameSize+'px';
+      nameEl.style.lineHeight='1.15';
+
+      // Note: show if enough room remains after name
+      if(noteEl){
+        const usedByName=nameSize*1.15*linesEst;
+        const remaining=avail-usedByName-4;
+        if(remaining>=10){
+          const noteSize=Math.min(14,Math.max(9,nameSize*0.62));
+          noteEl.style.fontSize=noteSize+'px';
+          noteEl.style.display='';
+        }else{
+          noteEl.style.display='none';
+        }
+      }
+    });
+  });
 }
 
 function buildPresentWeek(wi, isNext){
-  const wk=S.weeks[wi];
   const nd=wk.hasSunday?7:6;
   ensureA(wi);
   const isDark=document.body.classList.contains('dark');
@@ -1646,7 +1701,7 @@ function buildPresentWeek(wi, isNext){
   grid.className='pres-grid';
   // Columns: crew label | day1..dayN
   // Rows: day header | crew1..crewN  — all 1fr so they fill evenly
-  const crewColW='52px';
+  const crewColW='80px';
   const presNc=getWeekNumCrews(wi);
   grid.style.gridTemplateColumns=`${crewColW} repeat(${nd},1fr)`;
   grid.style.gridTemplateRows=`auto repeat(${presNc},1fr)`;

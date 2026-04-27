@@ -384,7 +384,7 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 /* Crew rows container */
 .pres-sp-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 /* Individual crew row */
-.pres-sp-row{display:flex;flex:none;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:height .8s cubic-bezier(.4,0,.2,1)}
+.pres-sp-row{display:flex;flex:1;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:height .8s cubic-bezier(.4,0,.2,1)}
 .pres-sp-row:last-child{border-bottom:none}
 /* Crew label cell */
 .pres-sp-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;border-left:3px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;overflow:hidden;position:relative;transition:border-left-color .4s,background .4s}
@@ -2614,12 +2614,25 @@ function startSpotlight(wi){
   stopSpotlight();
   buildSpotlightView(wi);
   _presSpotCrew=0;
-  applySpotlight();
   _presSpotTimer=setInterval(()=>{
     const nc=getWeekNumCrews(S.viewIdx);
     _presSpotCrew=(_presSpotCrew+1)%nc;
     applySpotlight();
   },PRES_SPOT_MS);
+  // rAF 1: rows have flex:1 height — snapshot that into explicit style.height
+  // with transitions OFF so there's no animation from "unset" state
+  requestAnimationFrame(()=>{
+    const rows=Array.from(document.querySelectorAll('.pres-sp-row'));
+    rows.forEach(r=>{
+      r.style.transition='none';
+      r.style.height=r.clientHeight+'px';
+    });
+    // Force reflow to commit these heights into CSSOM before re-enabling transitions
+    rows.forEach(r=>r.offsetHeight);
+    rows.forEach(r=>r.style.transition='');
+    // rAF 2: now change heights — CSS transition fires from committed values
+    requestAnimationFrame(()=>applySpotlight());
+  });
 }
 function applySpotlight(){
   document.querySelectorAll('.pres-sp-row').forEach((row,i)=>{
@@ -2820,11 +2833,6 @@ function buildSpotlightView(wi){
   }
   wrap.appendChild(rowsCont);
   main.appendChild(wrap);
-  // Initialize equal heights before applySpotlight runs, so transitions have a start value
-  requestAnimationFrame(()=>{
-    const h=rowsCont.clientHeight;
-    if(h&&nc)Array.from(rowsCont.querySelectorAll('.pres-sp-row')).forEach(r=>r.style.height=(h/nc)+'px');
-  });
 }
 
 function togglePresent(){

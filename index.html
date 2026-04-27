@@ -2671,9 +2671,11 @@ function fitSpotlightCards(){
         const footEl=card.querySelector('.pres-jfoot');
         if(!nameEl){cellH+=30;return;}
         const nameLen=Math.max(1,nameEl.textContent.length);
-        // Find largest font where name fits in max 3 lines
+        const longestWord=nameEl.textContent.trim().split(/\s+/).reduce((a,b)=>a.length>=b.length?a:b,'');
+        const maxFsByWord=Math.floor(cardInnerW/(Math.max(1,longestWord.length)*0.52));
+        // Find largest font where name fits in max 3 lines AND no word overflows
         let ns=MIN_SPOT_NAME;
-        for(let trial=MAX_SPOT_NAME;trial>=MIN_SPOT_NAME;trial--){
+        for(let trial=Math.min(MAX_SPOT_NAME,maxFsByWord);trial>=MIN_SPOT_NAME;trial--){
           const cpl=Math.max(1,Math.floor(cardInnerW/(trial*0.52)));
           if(Math.ceil(nameLen/cpl)<=3){ns=trial;break;}
         }
@@ -2723,8 +2725,10 @@ function fitSpotlightCards(){
         if(footEl)footEl.style.display='none';
         if(!nameEl)return;
         const nameLen=Math.max(1,nameEl.textContent.length);
+        const longestWord=nameEl.textContent.trim().split(/\s+/).reduce((a,b)=>a.length>=b.length?a:b,'');
+        const maxFsByWord=Math.floor(cardInnerW/(Math.max(1,longestWord.length)*0.52));
         let ns=MIN_OTHER_NAME;
-        for(let trial=MAX_OTHER_NAME;trial>=MIN_OTHER_NAME;trial--){
+        for(let trial=Math.min(MAX_OTHER_NAME,maxFsByWord);trial>=MIN_OTHER_NAME;trial--){
           const cpl=Math.max(1,Math.floor(cardInnerW/(trial*0.52)));
           const lines=Math.min(3,Math.ceil(nameLen/cpl));
           if(trial*LINE_H*lines<=textAvail){ns=trial;break;}

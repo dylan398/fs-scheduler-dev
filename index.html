@@ -404,7 +404,7 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 .pres-dh.today{background:#0a1626;border-bottom-color:#2a4a80}
 .pres-dh.sat{background:#09090e}
 .pres-dh .dn{font-family:var(--font-d);font-weight:900;font-size:clamp(11px,1.6vh,20px);letter-spacing:.1em;text-transform:uppercase;color:#b0b8cc;line-height:1}
-.pres-dh .dd{font-family:var(--font-m);font-size:clamp(8px,.95vh,12px);color:#2e3448;margin-top:2px}
+.pres-dh .dd{font-family:var(--font-m);font-size:clamp(8px,.95vh,12px);color:#4a5468;margin-top:2px}
 .pres-dh.today .dn{color:#5a9eff}
 .pres-dh.today .dd{color:#2a4a70}
 
@@ -414,7 +414,7 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 /* Crew label column */
 .pres-cl{background:#07090e;border-right:2px solid #1e2330;border-bottom:1px solid #14171f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;overflow:hidden}
 .pres-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(18px,2.8vh,36px);color:#f5c842;line-height:1;text-shadow:0 0 20px rgba(245,200,66,.4)}
-.pres-cl-names{font-family:var(--font-d);font-weight:600;color:#3a4055;text-align:center;line-height:1.3;margin-top:2px;word-break:break-word;overflow:hidden}
+.pres-cl-names{font-family:var(--font-d);font-weight:600;color:#6a7888;text-align:center;line-height:1.3;margin-top:2px;word-break:break-word;overflow:hidden}
 
 /* Job cells — dark canvas, cards float on top */
 .pres-cell{border-right:1px solid #14171f;border-bottom:1px solid #14171f;background:#0b0d14;padding:3px;overflow:hidden;display:flex;flex-direction:column;gap:2px;justify-content:flex-start}
@@ -429,12 +429,12 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 
 /* Job name — dark text on light card */
 .pres-jname{font-family:var(--font-d);font-weight:900;font-size:20px;color:#141720;line-height:1.1;overflow:hidden;padding-right:12px;word-break:break-word;letter-spacing:.01em}
-.pres-jcard.night .pres-jname{color:#90b0e0}
+.pres-jcard.night .pres-jname{color:#c8deff}
 .pres-jcard.oot:not(.night) .pres-jname{color:#4a2800}
 
 /* Note */
-.pres-jnote{font-size:12px;color:#5a6070;font-style:italic;overflow:hidden;margin-top:2px;word-break:break-word}
-.pres-jcard.night .pres-jnote{color:#4a6080}
+.pres-jnote{font-size:12px;color:#606878;font-style:italic;overflow:hidden;margin-top:2px;word-break:break-word}
+.pres-jcard.night .pres-jnote{color:#6888a8}
 .pres-jcard.oot:not(.night) .pres-jnote{color:#7a4a10}
 
 /* Status footer */
@@ -1627,7 +1627,9 @@ function fitPresentCards(){
           const footEl=card.querySelector('.pres-jfoot');
           if(!nameEl)return;
 
-          const footH=footEl?footEl.offsetHeight+3:0;
+          // Use fixed footer height estimate — measuring offsetHeight here would
+          // read the OLD flex:1 layout, not the new cardH, giving wrong values
+          const footH=footEl?15:0;
           const nameAvail=Math.max(8,avail-footH);
 
           // Width-aware wrapping estimate
@@ -1792,7 +1794,7 @@ function buildPresentWeek(wi, isNext){
           card.style.borderLeftColor=jc;
           const hex=jc.replace('#','');
           const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
-          if(!j.night&&!j.oot) card.style.background=`linear-gradient(135deg,rgba(${r},${g},${b},0.22) 0%,rgba(${r},${g},${b},0.08) 100%), #dde1ec`;
+          if(!j.night&&!j.oot) card.style.background='#dde1ec';
         }
         // Status badge — solid background for TV legibility
         const statColors={working:null,punch:'#d4a017',free:'#1a7a50',standby:'#5a3aaa'};

@@ -383,24 +383,35 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 .pres-sp-corner{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330}
 /* Crew rows container */
 .pres-sp-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-/* Individual crew row — flex-grow animates smoothly */
-.pres-sp-row{display:flex;flex:1;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:flex .75s cubic-bezier(.4,0,.2,1)}
+/* Individual crew row */
+.pres-sp-row{display:flex;flex:1;min-height:44px;overflow:hidden;border-bottom:1px solid #14171f;transition:flex .8s cubic-bezier(.4,0,.2,1)}
 .pres-sp-row:last-child{border-bottom:none}
-.pres-sp-row.spotlight{flex:5}
+.pres-sp-row.spotlight{flex:5;min-height:120px}
 /* Crew label cell */
-.pres-sp-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;overflow:hidden;transition:background .75s}
-.pres-sp-row.spotlight .pres-sp-cl{background:#080b10}
-.pres-sp-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(20px,2.8vh,40px);color:#f5c842;line-height:1;text-shadow:0 0 22px rgba(245,200,66,.4);transition:font-size .75s}
-.pres-sp-row.spotlight .pres-sp-cl-num{font-size:clamp(28px,4vh,52px)}
-.pres-sp-cl-names{font-family:var(--font-d);font-weight:600;color:#8898ac;text-align:center;line-height:1.3;margin-top:3px;word-break:break-word;overflow:hidden}
+.pres-sp-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;border-left:3px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;overflow:hidden;position:relative;transition:border-left-color .4s,background .4s}
+.pres-sp-row.spotlight .pres-sp-cl{border-left-color:#f5c842;background:#050709}
+.pres-sp-cl-num{font-family:var(--font-d);font-weight:900;color:#f5c842;line-height:1;font-size:22px;transition:font-size .7s ease,text-shadow .7s ease}
+.pres-sp-row.spotlight .pres-sp-cl-num{font-size:clamp(32px,4.2vh,50px)}
+@keyframes spPulse{0%,100%{text-shadow:0 0 18px rgba(245,200,66,.4)}50%{text-shadow:0 0 36px rgba(245,200,66,.85),0 0 60px rgba(245,200,66,.25)}}
+.pres-sp-row.spotlight .pres-sp-cl-num{animation:spPulse 2.8s ease-in-out infinite}
+.pres-sp-row:not(.spotlight) .pres-sp-cl-num{animation:none}
+.pres-sp-cl-names{font-family:var(--font-d);font-weight:600;color:#8898ac;text-align:center;line-height:1.3;margin-top:3px;word-break:break-word;overflow:hidden;font-size:9px;transition:font-size .7s ease}
+.pres-sp-row.spotlight .pres-sp-cl-names{font-size:13px}
+/* Timer bar — fills over cycle duration */
+.pres-sp-timer{position:absolute;bottom:0;left:0;height:3px;background:#f5c842;width:0%;opacity:.75;pointer-events:none}
 /* Day cells */
-.pres-sp-cell{flex:1;min-width:0;background:#0b0d14;border-right:1px solid #14171f;padding:3px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.pres-sp-cell{flex:1;min-width:0;background:#0b0d14;border-right:1px solid #14171f;padding:3px;display:flex;flex-direction:column;gap:2px;overflow:hidden;align-items:stretch}
 .pres-sp-cell:last-child{border-right:none}
 .pres-sp-cell.today{background:#091220;border-left:2px solid #1e3a6e}
 .pres-sp-cell.sat{background:#09090e}
-/* Cards in spotlight rows still use pres-jcard */
-/* Spotlight indicator bar at left of featured row */
-.pres-sp-row.spotlight .pres-sp-cl::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#f5c842;opacity:.8}
+/* Cards — natural height, no stretching */
+.pres-sp-cell .pres-jcard{flex:none!important;height:auto!important;min-height:unset!important}
+/* Dim non-spotlight cards */
+.pres-sp-row:not(.spotlight) .pres-jcard{opacity:.55;transition:opacity .8s ease}
+.pres-sp-row.spotlight .pres-jcard{opacity:1;transition:opacity .8s ease}
+/* Font transitions on card text */
+.pres-jname{transition:font-size .65s ease}
+.pres-jnote{transition:font-size .65s ease,opacity .65s ease}
 
 /* Week panel */
 .pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#07090e}
@@ -2615,54 +2626,51 @@ function applySpotlight(){
   document.querySelectorAll('.pres-sp-row').forEach((row,i)=>{
     row.classList.toggle('spotlight',i===_presSpotCrew);
   });
-  setTimeout(fitSpotlightCards,780);
+  // Set font sizes immediately so text grows with the row animation
+  fitSpotlightCards();
+  // Progress bar after a tiny delay so the DOM has the new .spotlight class
+  requestAnimationFrame(startProgressBar);
 }
 function fitSpotlightCards(){
   document.querySelectorAll('.pres-sp-row').forEach(row=>{
     const isSpot=row.classList.contains('spotlight');
-    const rowH=row.clientHeight;
     row.querySelectorAll('.pres-sp-cell').forEach(cell=>{
-      const cards=cell.querySelectorAll('.pres-jcard');
-      if(!cards.length)return;
-      const n=cards.length;
-      const cardH=Math.max(16,(rowH-4)/n-2);
-      const padV=isSpot?12:6;
-      const footRes=isSpot?14:0;
-      cards.forEach(card=>{
-        card.style.flex='none';card.style.height=cardH+'px';card.style.minHeight='unset';
+      cell.querySelectorAll('.pres-jcard').forEach(card=>{
+        // Natural height — never stretch to fill row
+        card.style.flex='none';
+        card.style.height='auto';
+        card.style.minHeight='unset';
         const nameEl=card.querySelector('.pres-jname');
         const noteEl=card.querySelector('.pres-jnote');
         const footEl=card.querySelector('.pres-jfoot');
         if(!nameEl)return;
-        const textAvail=Math.max(4,cardH-padV-(footEl&&isSpot?footRes:0));
-        const cardW=Math.max(60,card.clientWidth-28);
-        if(isSpot&&noteEl&&textAvail>=18){
-          let ns=(textAvail-4)/(1.1+0.65);
-          const estW=nameEl.textContent.length*ns*0.52;
-          if(estW>cardW)ns=(textAvail-4)/(2.2+0.65);
-          ns=Math.min(42,Math.max(9,ns));
-          noteEl.style.fontSize=Math.min(22,Math.max(8,ns*0.65))+'px';
-          noteEl.style.display='';
-          nameEl.style.fontSize=ns+'px';
+        if(isSpot){
+          nameEl.style.fontSize='28px';
+          nameEl.style.lineHeight='1.15';
+          if(noteEl){noteEl.style.fontSize='17px';noteEl.style.opacity='1';noteEl.style.display='';}
+          if(footEl)footEl.style.display='';
         }else{
-          if(noteEl)noteEl.style.display='none';
-          let ns=Math.min(isSpot?38:12,Math.max(8,textAvail*(isSpot?.82:.75)));
-          if(nameEl.textContent.length*ns*0.52>cardW)ns=Math.min(isSpot?38:12,Math.max(8,textAvail*(isSpot?.5:.45)));
-          nameEl.style.fontSize=ns+'px';
+          nameEl.style.fontSize='11px';
+          nameEl.style.lineHeight='1.2';
+          if(noteEl){noteEl.style.opacity='0';noteEl.style.display='none';}
+          if(footEl)footEl.style.display='none';
         }
-        nameEl.style.lineHeight='1.1';
       });
     });
-    const clNames=row.querySelector('.pres-sp-cl-names');
-    if(clNames){
-      const numEl=row.querySelector('.pres-sp-cl-num');
-      const numH=numEl?numEl.offsetHeight+3:0;
-      const avail=Math.max(8,rowH-numH-8);
-      const lc=clNames.innerHTML.split('<br>').length||1;
-      const fs=Math.min(isSpot?18:12,Math.max(7,(avail/lc)*0.68));
-      clNames.style.fontSize=fs+'px';
-    }
   });
+}
+function startProgressBar(){
+  document.querySelectorAll('.pres-sp-timer').forEach(t=>t.remove());
+  const spotRow=document.querySelector('.pres-sp-row.spotlight');
+  if(!spotRow)return;
+  const cl=spotRow.querySelector('.pres-sp-cl');
+  if(!cl)return;
+  const bar=document.createElement('div');
+  bar.className='pres-sp-timer';
+  cl.appendChild(bar);
+  bar.offsetWidth; // force reflow before transition
+  bar.style.transition=`width ${PRES_SPOT_MS}ms linear`;
+  bar.style.width='100%';
 }
 function buildSpotlightView(wi){
   buildInstanceMap();

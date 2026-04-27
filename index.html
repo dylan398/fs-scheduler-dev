@@ -369,36 +369,38 @@ body.present-viewer .pres-strip{display:none!important}
 body.present-viewer #present-btn{border-color:var(--green);color:var(--green)}
 body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{display:flex!important}
 
-/* ── Day-cycle TV mode ────────────────────────────────────────────────────── */
-.pres-day-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden;background:#07090e}
-.pres-day-hdr{flex-shrink:0;background:#07090e;padding:14px 28px 12px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #f5c842}
-.pres-day-name{font-family:var(--font-d);font-weight:900;font-size:clamp(28px,4.5vh,58px);color:#f0f2f8;letter-spacing:.06em;text-transform:uppercase;line-height:1}
-.pres-day-date{font-family:var(--font-m);font-size:clamp(14px,1.8vh,22px);color:#8090a8;letter-spacing:.06em}
-.pres-day-rev{font-family:var(--font-m);font-size:clamp(11px,1.4vh,16px);color:#4a5468;text-align:right}
-.pres-day-rev span{color:#3ecf8e;font-weight:700}
-/* Day indicator strip */
-.pres-day-strip{flex-shrink:0;display:flex;height:36px;border-bottom:1px solid #14171f;position:relative}
-.pres-day-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #14171f;position:relative;overflow:hidden}
-.pres-day-tab:last-child{border-right:none}
-.pres-day-tab-name{font-family:var(--font-d);font-weight:800;font-size:clamp(9px,1.1vh,13px);letter-spacing:.12em;text-transform:uppercase;color:#2e3448;transition:color .3s;line-height:1}
-.pres-day-tab-date{font-family:var(--font-m);font-size:clamp(7px,.85vh,10px);color:#1e2330;transition:color .3s;margin-top:2px}
-.pres-day-tab.active .pres-day-tab-name{color:#f5c842}
-.pres-day-tab.active .pres-day-tab-date{color:#6a7888}
-.pres-day-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#f5c842}
-/* Progress bar inside active tab */
-.pres-day-prog{position:absolute;bottom:0;left:0;height:2px;background:rgba(245,200,66,.35);width:0%}
-/* Crew rows */
-.pres-day-grid{flex:1;min-height:0;display:flex;flex-direction:column}
-.pres-day-row{flex:1;min-height:0;display:flex;border-bottom:1px solid #14171f}
-.pres-day-row:last-child{border-bottom:none}
-.pres-day-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;overflow:hidden}
-.pres-day-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(22px,3.2vh,42px);color:#f5c842;line-height:1;text-shadow:0 0 22px rgba(245,200,66,.4)}
-.pres-day-cl-names{font-family:var(--font-d);font-weight:600;font-size:11px;color:#8898ac;text-align:center;line-height:1.3;margin-top:3px;word-break:break-word;overflow:hidden}
-.pres-day-jobs{flex:1;min-width:0;background:#0b0d14;padding:4px;display:flex;flex-direction:column;gap:3px;justify-content:flex-start;overflow:hidden}
-.pres-day-empty{display:flex;align-items:center;padding-left:20px;color:#1e2330;font-family:var(--font-d);font-weight:700;font-size:clamp(10px,1.2vh,15px);letter-spacing:.1em;text-transform:uppercase}
-/* Cards in day view inherit .pres-jcard */
-@keyframes presday-slidein{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
-.pres-day-wrap.day-anim .pres-day-grid{animation:presday-slidein .35s ease}
+/* ── CREW SPOTLIGHT TV MODE ───────────────────────────────────────────────── */
+.pres-sp-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden;background:#07090e}
+.pres-sp-bar{flex-shrink:0;background:#07090e;display:flex;align-items:center;justify-content:space-between;padding:5px 18px;border-bottom:2px solid #f5c842}
+.pres-sp-bar-left{display:flex;align-items:center;gap:10px}
+.pres-sp-wklabel{font-family:var(--font-d);font-weight:900;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:3px 10px;background:#f5c842;color:#000}
+.pres-sp-dates{font-family:var(--font-d);font-weight:700;font-size:clamp(12px,1.4vh,17px);color:#d0d4e0;letter-spacing:.04em}
+.pres-sp-rev{font-family:var(--font-m);font-size:clamp(10px,1.1vh,13px);color:#4a5468;display:flex;gap:14px}
+.pres-sp-rev .inv{color:#3ecf8e;font-weight:700}
+.pres-sp-rev .sch{font-weight:700}
+/* Day header row */
+.pres-sp-dhrow{flex-shrink:0;display:flex;border-bottom:2px solid #1e2330}
+.pres-sp-corner{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330}
+/* Crew rows container */
+.pres-sp-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+/* Individual crew row — flex-grow animates smoothly */
+.pres-sp-row{display:flex;flex:1;min-height:0;overflow:hidden;border-bottom:1px solid #14171f;transition:flex .75s cubic-bezier(.4,0,.2,1)}
+.pres-sp-row:last-child{border-bottom:none}
+.pres-sp-row.spotlight{flex:5}
+/* Crew label cell */
+.pres-sp-cl{flex-shrink:0;width:120px;background:#07090e;border-right:2px solid #1e2330;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 3px;overflow:hidden;transition:background .75s}
+.pres-sp-row.spotlight .pres-sp-cl{background:#080b10}
+.pres-sp-cl-num{font-family:var(--font-d);font-weight:900;font-size:clamp(20px,2.8vh,40px);color:#f5c842;line-height:1;text-shadow:0 0 22px rgba(245,200,66,.4);transition:font-size .75s}
+.pres-sp-row.spotlight .pres-sp-cl-num{font-size:clamp(28px,4vh,52px)}
+.pres-sp-cl-names{font-family:var(--font-d);font-weight:600;color:#8898ac;text-align:center;line-height:1.3;margin-top:3px;word-break:break-word;overflow:hidden}
+/* Day cells */
+.pres-sp-cell{flex:1;min-width:0;background:#0b0d14;border-right:1px solid #14171f;padding:3px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.pres-sp-cell:last-child{border-right:none}
+.pres-sp-cell.today{background:#091220;border-left:2px solid #1e3a6e}
+.pres-sp-cell.sat{background:#09090e}
+/* Cards in spotlight rows still use pres-jcard */
+/* Spotlight indicator bar at left of featured row */
+.pres-sp-row.spotlight .pres-sp-cl::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#f5c842;opacity:.8}
 
 /* Week panel */
 .pres-week{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#07090e}
@@ -1191,7 +1193,7 @@ function doLogout() {
 // ── BOOT ─────────────────────────────────────────────────────────────────
 // Show login on first load. doLogin() will call initFirebase() on success.
 showLogin();
-window.addEventListener('resize',()=>{if(_presentMode)fitPresentCards();});
+window.addEventListener('resize',()=>{if(_presentMode){if(_presentSingleWeek)fitSpotlightCards();else fitPresentCards();}});
 
 
 
@@ -1593,10 +1595,10 @@ function render(){
 function renderPresent(){
   buildInstanceMap();
   if(_presentSingleWeek){
-    startDayCycle(S.viewIdx);
+    startSpotlight(S.viewIdx);
     return;
   }
-  stopDayCycle();
+  stopSpotlight();
   const main=document.getElementById('main');
   main.innerHTML='';
   // Full-height flex row container
@@ -1689,166 +1691,6 @@ function fitPresentCards(){
         namesEl.style.lineHeight=(fs<9?1.1:1.3).toString();
       });
     });
-  });
-}
-
-function renderDayView(wi,animate){
-  buildInstanceMap();
-  const wk=S.weeks[wi];
-  const nd=wk.hasSunday?7:6;
-  const di=Math.min(_presDayIdx,nd-1);
-  const nc=getWeekNumCrews(wi);
-  const crews=getWeekCrews(wi);
-  const main=document.getElementById('main');
-  const showMoney=!(_presentMode==='viewer');
-
-  main.innerHTML='';
-  main.style.cssText='display:block;padding:0;overflow:hidden;background:#07090e;height:100%;box-sizing:border-box';
-
-  const wrap=document.createElement('div');
-  wrap.className='pres-day-wrap';
-  if(animate){wrap.classList.add('day-anim');setTimeout(()=>wrap.classList.remove('day-anim'),400);}
-
-  // ── Day header ────────────────────────────────────────────────────────────
-  const hdr=document.createElement('div');hdr.className='pres-day-hdr';
-  const dayName=['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'][di]||'';
-  const wSched=calcWeekSched(wk,nd),wInv=calcWeekInv(wk);
-  const revHtml=showMoney?`<div class="pres-day-rev">Scheduled: <span>$${fmt(wSched)}</span> &nbsp;·&nbsp; Invoice: <span>$${fmt(wInv)}</span></div>`:'';
-  hdr.innerHTML=`<div><div class="pres-day-name">${dayName}</div><div class="pres-day-date">${wk.dates[di]||''}</div></div>${revHtml}`;
-  wrap.appendChild(hdr);
-
-  // ── Day indicator strip ───────────────────────────────────────────────────
-  const strip=document.createElement('div');strip.className='pres-day-strip';
-  const dayAbbr=['MON','TUE','WED','THU','FRI','SAT','SUN'];
-  for(let d=0;d<nd;d++){
-    const tab=document.createElement('div');
-    tab.className='pres-day-tab'+(d===di?' active':'');
-    tab.innerHTML=`<div class="pres-day-tab-name">${dayAbbr[d]}</div><div class="pres-day-tab-date">${wk.dates[d]||''}</div>`;
-    if(d===di){const prog=document.createElement('div');prog.className='pres-day-prog';tab.appendChild(prog);}
-    strip.appendChild(tab);
-  }
-  wrap.appendChild(strip);
-
-  // ── Crew rows ─────────────────────────────────────────────────────────────
-  const grid=document.createElement('div');grid.className='pres-day-grid';
-  const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
-  const isTodayCurrent=(wi===currentWeekIdx(S.weeks))&&(wk.dates[di]===todayStr);
-  if(isTodayCurrent)grid.style.borderTop='2px solid #1e3a6e';
-
-  for(let ci=0;ci<nc;ci++){
-    const crew=crews[ci]||{num:ci+1,members:[]};
-    const row=document.createElement('div');row.className='pres-day-row';
-
-    // Crew label
-    const cl=document.createElement('div');cl.className='pres-day-cl';
-    cl.innerHTML=`<div class="pres-day-cl-num">${crew.num}</div><div class="pres-day-cl-names">${crew.members.map(n=>n.split(' ')[0]).join('<br>')}</div>`;
-    row.appendChild(cl);
-
-    // Jobs area
-    const jobsEl=document.createElement('div');jobsEl.className='pres-day-jobs';
-    const jobs=(wk.a[ci]&&wk.a[ci][di])||[];
-    if(!jobs.length){
-      const empty=document.createElement('div');empty.className='pres-day-empty';empty.textContent='—';
-      jobsEl.appendChild(empty);
-    }else{
-      jobs.forEach((j,ji)=>{
-        if(!j||!j.job)return;
-        const jc=(S.jobColors||{})[j.job];
-        const card=document.createElement('div');
-        card.className='pres-jcard'+(j.night?' night':'')+(j.oot?' oot':'');
-        card.style.flex='1';card.style.minHeight='0';
-        if(jc){
-          card.style.borderLeftColor=jc;
-          if(!j.night&&!j.oot)card.style.background='#dde1ec';
-        }
-        const statLabels={punch:'Punch',free:'Change Order',standby:'🪖 Sub'};
-        const statColors={punch:'#d4a017',free:'#1a7a50',standby:'#5a3aaa'};
-        const statLabel=statLabels[j.s]||'';
-        const statBg=statColors[j.s]||null;
-        const pInst=getInstanceNum(j.job,wi,ci,di,ji);
-        const footHtml=(statLabel||j.night||j.oot||pInst)
-          ?`<div class="pres-jfoot">`
-            +(j.night?`<span class="pres-jnight">🌙</span>`:'')
-            +(j.oot?`<span class="pres-jnight">🛣️</span>`:'')
-            +(statLabel&&statBg?`<span class="pres-jstat" style="background:${statBg};color:#fff">${statLabel}</span>`:'')
-            +(pInst?`<span style="font-family:var(--font-m);font-size:9px;color:#3a4055;margin-left:auto">#${pInst}</span>`:'')
-            +`</div>`
-          :'';
-        const displayNote=j.note||(wk.jobSummary[j.job]&&wk.jobSummary[j.job].note)||'';
-        card.innerHTML=`<div class="pres-jname">${esc(j.job)}</div>`
-          +(displayNote?`<div class="pres-jnote">${esc(displayNote)}</div>`:'')
-          +footHtml;
-        if(!VIEWER_MODE){
-          const rm=document.createElement('button');rm.className='pres-jremove';rm.innerHTML='×';rm.title='Remove';
-          rm.addEventListener('pointerdown',e=>e.stopPropagation());
-          rm.addEventListener('click',e=>{e.stopPropagation();S.weeks[wi].a[ci][di].splice(ji,1);save();renderDayView(wi,false);});
-          card.appendChild(rm);
-        }
-        jobsEl.appendChild(card);
-      });
-    }
-    row.appendChild(jobsEl);
-    grid.appendChild(row);
-  }
-  wrap.appendChild(grid);
-  main.appendChild(wrap);
-
-  // Size fonts after layout
-  requestAnimationFrame(()=>{
-    fitDayCards(nc);
-    advanceProgressBar();
-  });
-}
-
-function fitDayCards(nc){
-  const grid=document.querySelector('.pres-day-grid');
-  if(!grid)return;
-  const rows=grid.querySelectorAll('.pres-day-row');
-  rows.forEach(row=>{
-    const jobsEl=row.querySelector('.pres-day-jobs');
-    if(!jobsEl)return;
-    const cards=jobsEl.querySelectorAll('.pres-jcard');
-    if(!cards.length)return;
-    const rowH=jobsEl.clientHeight;
-    const n=cards.length;
-    const cardH=Math.max(20,(rowH-4)/n-3);
-    const padV=12;
-    const footRes=14;
-    cards.forEach(card=>{
-      card.style.flex='none';card.style.height=cardH+'px';card.style.minHeight='unset';
-      const nameEl=card.querySelector('.pres-jname');
-      const noteEl=card.querySelector('.pres-jnote');
-      const footEl=card.querySelector('.pres-jfoot');
-      if(!nameEl)return;
-      const textAvail=Math.max(4,cardH-padV-(footEl?footRes:0));
-      const cardW=Math.max(100,card.clientWidth-28);
-      if(noteEl&&textAvail>=18){
-        let nameSize=(textAvail-4)/(1.1+0.65);
-        const estW=nameEl.textContent.length*nameSize*0.52;
-        const lines=estW>cardW?2:1;
-        if(lines===2)nameSize=(textAvail-4)/(2.2+0.65);
-        nameSize=Math.min(38,Math.max(9,nameSize));
-        const noteSize=Math.min(20,Math.max(8,nameSize*0.65));
-        nameEl.style.fontSize=nameSize+'px';nameEl.style.lineHeight='1.1';
-        noteEl.style.fontSize=noteSize+'px';noteEl.style.display='';
-      }else{
-        if(noteEl)noteEl.style.display='none';
-        let nameSize=Math.min(38,Math.max(9,textAvail*0.82));
-        if(nameEl.textContent.length*nameSize*0.52>cardW)nameSize=Math.min(38,Math.max(9,textAvail*0.5));
-        nameEl.style.fontSize=nameSize+'px';nameEl.style.lineHeight='1.1';
-      }
-    });
-    // Crew names
-    const clNamesEl=row.querySelector('.pres-day-cl-names');
-    if(clNamesEl){
-      const numEl=row.querySelector('.pres-day-cl-num');
-      const clH=row.querySelector('.pres-day-cl')?.clientHeight||rowH;
-      const numH=numEl?numEl.offsetHeight+4:0;
-      const avail=Math.max(8,clH-numH-8);
-      const lc=clNamesEl.innerHTML.split('<br>').length||1;
-      const fs=Math.min(14,Math.max(7,(avail/lc)*0.7));
-      clNamesEl.style.fontSize=fs+'px';
-    }
   });
 }
 
@@ -2571,7 +2413,7 @@ function adjustWeekCrews(wi,delta){
   save();render();
 }
 function toggleSunday(wi){pushUndo();const wk=S.weeks[wi];wk.hasSunday=!wk.hasSunday;if(wk.hasSunday){if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});}else{wk.dates=wk.dates.slice(0,6);wk.a.forEach(cr=>cr.splice(6,1));}save();render();}
-function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;if(_presentSingleWeek)stopDayCycle();S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}
+function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;if(_presentSingleWeek)stopSpotlight();S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}
 function updateNav(){
   document.getElementById('nav-prev').disabled=S.viewIdx===0;
   const w0=S.weeks[S.viewIdx],w1=S.weeks[S.viewIdx+1]||w0;
@@ -2749,41 +2591,174 @@ function doPrint(which){
   },400);
 }
 // ── PRESENTATION MODE ────────────────────────────────────────────────────
-let _presentMode = null; // null | 'editor' | 'viewer'
+let _presentMode = null;
 let _presentSingleWeek = false;
-let _presDayIdx = 0;
-let _presCycleTimer = null;
-const PRES_CYCLE_MS = 8000;
+let _presSpotCrew = 0;
+let _presSpotTimer = null;
+const PRES_SPOT_MS = 8000;
 
-function stopDayCycle(){
-  if(_presCycleTimer){clearInterval(_presCycleTimer);_presCycleTimer=null;}
-  const p=document.querySelector('.pres-day-prog');if(p)p.style.transition='none',p.style.width='0%';
+function stopSpotlight(){
+  if(_presSpotTimer){clearInterval(_presSpotTimer);_presSpotTimer=null;}
 }
-function startDayCycle(wi){
-  stopDayCycle();
+function startSpotlight(wi){
+  stopSpotlight();
+  buildSpotlightView(wi);
+  _presSpotCrew=0;
+  applySpotlight();
+  _presSpotTimer=setInterval(()=>{
+    const nc=getWeekNumCrews(S.viewIdx);
+    _presSpotCrew=(_presSpotCrew+1)%nc;
+    applySpotlight();
+  },PRES_SPOT_MS);
+}
+function applySpotlight(){
+  document.querySelectorAll('.pres-sp-row').forEach((row,i)=>{
+    row.classList.toggle('spotlight',i===_presSpotCrew);
+  });
+  setTimeout(fitSpotlightCards,780);
+}
+function fitSpotlightCards(){
+  document.querySelectorAll('.pres-sp-row').forEach(row=>{
+    const isSpot=row.classList.contains('spotlight');
+    const rowH=row.clientHeight;
+    row.querySelectorAll('.pres-sp-cell').forEach(cell=>{
+      const cards=cell.querySelectorAll('.pres-jcard');
+      if(!cards.length)return;
+      const n=cards.length;
+      const cardH=Math.max(16,(rowH-4)/n-2);
+      const padV=isSpot?12:6;
+      const footRes=isSpot?14:0;
+      cards.forEach(card=>{
+        card.style.flex='none';card.style.height=cardH+'px';card.style.minHeight='unset';
+        const nameEl=card.querySelector('.pres-jname');
+        const noteEl=card.querySelector('.pres-jnote');
+        const footEl=card.querySelector('.pres-jfoot');
+        if(!nameEl)return;
+        const textAvail=Math.max(4,cardH-padV-(footEl&&isSpot?footRes:0));
+        const cardW=Math.max(60,card.clientWidth-28);
+        if(isSpot&&noteEl&&textAvail>=18){
+          let ns=(textAvail-4)/(1.1+0.65);
+          const estW=nameEl.textContent.length*ns*0.52;
+          if(estW>cardW)ns=(textAvail-4)/(2.2+0.65);
+          ns=Math.min(42,Math.max(9,ns));
+          noteEl.style.fontSize=Math.min(22,Math.max(8,ns*0.65))+'px';
+          noteEl.style.display='';
+          nameEl.style.fontSize=ns+'px';
+        }else{
+          if(noteEl)noteEl.style.display='none';
+          let ns=Math.min(isSpot?38:12,Math.max(8,textAvail*(isSpot?.82:.75)));
+          if(nameEl.textContent.length*ns*0.52>cardW)ns=Math.min(isSpot?38:12,Math.max(8,textAvail*(isSpot?.5:.45)));
+          nameEl.style.fontSize=ns+'px';
+        }
+        nameEl.style.lineHeight='1.1';
+      });
+    });
+    const clNames=row.querySelector('.pres-sp-cl-names');
+    if(clNames){
+      const numEl=row.querySelector('.pres-sp-cl-num');
+      const numH=numEl?numEl.offsetHeight+3:0;
+      const avail=Math.max(8,rowH-numH-8);
+      const lc=clNames.innerHTML.split('<br>').length||1;
+      const fs=Math.min(isSpot?18:12,Math.max(7,(avail/lc)*0.68));
+      clNames.style.fontSize=fs+'px';
+    }
+  });
+}
+function buildSpotlightView(wi){
+  buildInstanceMap();
   const wk=S.weeks[wi];const nd=wk.hasSunday?7:6;
+  const nc=getWeekNumCrews(wi);const crews=getWeekCrews(wi);
+  const main=document.getElementById('main');
+  const showMoney=!(_presentMode==='viewer');
   const todayStr=MN[new Date().getMonth()]+' '+new Date().getDate();
-  const todayDi=wk.dates.indexOf(todayStr);
-  _presDayIdx=todayDi>=0?todayDi:0;
-  renderDayView(wi,true);
-  _presCycleTimer=setInterval(()=>{
-    const w=S.weeks[S.viewIdx];const n=w.hasSunday?7:6;
-    _presDayIdx=(_presDayIdx+1)%n;
-    renderDayView(S.viewIdx,true);
-  },PRES_CYCLE_MS);
-}
-function advanceProgressBar(){
-  const p=document.querySelector('.pres-day-prog');
-  if(!p)return;
-  p.style.transition='none';p.style.width='0%';
-  p.offsetWidth; // force reflow
-  p.style.transition=`width ${PRES_CYCLE_MS}ms linear`;
-  p.style.width='100%';
+  const curIdx=currentWeekIdx(S.weeks);
+  const isThisWeek=wi===curIdx,isNextWeek=wi===curIdx+1;
+
+  main.innerHTML='';
+  main.style.cssText='display:flex;flex-direction:column;padding:0;overflow:hidden;background:#07090e;height:100%;box-sizing:border-box';
+
+  const wrap=document.createElement('div');wrap.className='pres-sp-wrap';
+
+  // Header bar
+  const wSched=calcWeekSched(wk,nd),wInv=calcWeekInv(wk);
+  const tgt=wk.target||0;
+  const sc=tgt>0?(wSched>=tgt?'#3ecf8e':wSched>=tgt*.75?'#f5c842':'#e05252'):'#f5c842';
+  const bar=document.createElement('div');bar.className='pres-sp-bar';
+  const lbl=isNextWeek?'<span class="pres-sp-wklabel">NEXT WEEK</span>':isThisWeek?'<span class="pres-sp-wklabel curr" style="background:#1a1d26;color:#3a4055">THIS WEEK</span>':'';
+  const monHtml=showMoney?`<div class="pres-sp-rev"><span class="sch" style="color:${sc}">Sched: $${fmt(wSched)}</span><span class="inv">Invoice: $${fmt(wInv)}</span></div>`:'';
+  bar.innerHTML=`<div class="pres-sp-bar-left">${lbl}<span class="pres-sp-dates">${wk.dates[0]} – ${wk.dates[nd-1]}</span></div>${monHtml}`;
+  wrap.appendChild(bar);
+
+  // Day header row
+  const dhRow=document.createElement('div');dhRow.className='pres-sp-dhrow';
+  const corner=document.createElement('div');corner.className='pres-sp-corner';dhRow.appendChild(corner);
+  for(let di=0;di<nd;di++){
+    const isToday=isThisWeek&&wk.dates[di]===todayStr;
+    const isSat=di===5;
+    const dh=document.createElement('div');
+    dh.className='pres-dh'+(isToday?' today':'')+(isSat?' sat':'');
+    dh.style.flex='1';dh.style.borderLeft='none';
+    dh.innerHTML=`<div class="dn">${DAY_NAMES[di]}</div><div class="dd">${wk.dates[di]||''}</div>`;
+    dhRow.appendChild(dh);
+  }
+  wrap.appendChild(dhRow);
+
+  // Crew rows
+  const rowsCont=document.createElement('div');rowsCont.style.cssText='flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden';
+  for(let ci=0;ci<nc;ci++){
+    const crew=crews[ci]||{num:ci+1,members:[]};
+    const row=document.createElement('div');row.className='pres-sp-row';
+
+    const cl=document.createElement('div');cl.className='pres-sp-cl';cl.style.position='relative';
+    cl.innerHTML=`<div class="pres-sp-cl-num">${crew.num}</div><div class="pres-sp-cl-names">${crew.members.map(n=>n.split(' ')[0]).join('<br>')}</div>`;
+    row.appendChild(cl);
+
+    for(let di=0;di<nd;di++){
+      const isToday=isThisWeek&&wk.dates[di]===todayStr;
+      const isSat=di===5;
+      const cell=document.createElement('div');
+      cell.className='pres-sp-cell'+(isToday?' today':'')+(isSat?' sat':'');
+      const jobs=(wk.a[ci]&&wk.a[ci][di])||[];
+      jobs.forEach((j,ji)=>{
+        if(!j||!j.job)return;
+        const jc=(S.jobColors||{})[j.job];
+        const card=document.createElement('div');
+        card.className='pres-jcard'+(j.night?' night':'')+(j.oot?' oot':'');
+        card.style.flex='1';card.style.minHeight='0';
+        if(jc){card.style.borderLeftColor=jc;if(!j.night&&!j.oot)card.style.background='#dde1ec';}
+        const statLabels={punch:'Punch',free:'Change Order',standby:'🪖 Sub'};
+        const statBgs={punch:'#d4a017',free:'#1a7a50',standby:'#5a3aaa'};
+        const sl=statLabels[j.s]||'';const sb=statBgs[j.s]||null;
+        const pInst=getInstanceNum(j.job,wi,ci,di,ji);
+        const footHtml=(sl||j.night||j.oot||pInst)
+          ?`<div class="pres-jfoot">`
+            +(j.night?`<span class="pres-jnight">🌙</span>`:'')
+            +(j.oot?`<span class="pres-jnight">🛣️</span>`:'')
+            +(sl&&sb?`<span class="pres-jstat" style="background:${sb};color:#fff">${sl}</span>`:'')
+            +(pInst?`<span style="font-family:var(--font-m);font-size:8px;color:#3a4055;margin-left:auto">#${pInst}</span>`:'')
+            +`</div>`
+          :'';
+        const dn=j.note||(wk.jobSummary[j.job]&&wk.jobSummary[j.job].note)||'';
+        card.innerHTML=`<div class="pres-jname">${esc(j.job)}</div>`+(dn?`<div class="pres-jnote">${esc(dn)}</div>`:'')+footHtml;
+        if(!VIEWER_MODE){
+          const rm=document.createElement('button');rm.className='pres-jremove';rm.innerHTML='×';
+          rm.addEventListener('pointerdown',e=>e.stopPropagation());
+          rm.addEventListener('click',e=>{e.stopPropagation();S.weeks[wi].a[ci][di].splice(ji,1);save();buildSpotlightView(wi);applySpotlight();});
+          card.appendChild(rm);
+        }
+        cell.appendChild(card);
+      });
+      row.appendChild(cell);
+    }
+    rowsCont.appendChild(row);
+  }
+  wrap.appendChild(rowsCont);
+  main.appendChild(wrap);
 }
 
 function togglePresent(){
   if(_presentMode){
-    stopDayCycle();
+    stopSpotlight();
     document.body.classList.remove('present-editor','present-viewer');
     _presentMode=null;
     document.getElementById('present-btn').textContent='⛶';
@@ -2803,7 +2778,7 @@ function togglePresent(){
 function togglePresentCount(){
   _presentSingleWeek=!_presentSingleWeek;
   document.getElementById('pres-count-btn').textContent=_presentSingleWeek?'TV':'MTG';
-  if(!_presentSingleWeek)stopDayCycle();
+  if(!_presentSingleWeek)stopSpotlight();
   render();
 }
 // F11: toggle fullscreen only (browser native) — presentation layout is separate

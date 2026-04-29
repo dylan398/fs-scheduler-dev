@@ -98,6 +98,7 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
 .cl:hover{background:#dedad2}
 .cl-num{font-family:var(--font-d);font-weight:800;font-size:22px;color:#3a3530;line-height:1}
 .cl-sub{font-family:var(--font-d);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-muted)}
+.cl-members{font-size:9px;letter-spacing:0;text-transform:none;line-height:1.4;color:var(--txt-muted)}
 
 /* CELLS */
 .cell{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);min-height:80px;padding:4px;background:var(--bg-cell);display:flex;flex-direction:column;gap:3px;position:relative;transition:background .1s}
@@ -240,10 +241,15 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
   .jremove{width:20px;height:20px;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0}
   .cell-add{font-size:26px}
 
-  /* Roster column hidden on mobile — accessible via tap crew label */
+  /* Roster column hidden on mobile — names now in crew cell */
   .rc{display:none}
 
-  /* Revenue row hidden on mobile (no money in viewer, too small in editor) */
+  /* Crew cell on mobile — wider to fit names */
+  .cl{min-width:42px;padding:3px 2px}
+  .cl-num{font-size:16px}
+  .cl-members{font-size:8px;line-height:1.35}
+
+  /* Revenue row hidden on mobile */
   .rv-day,.rv-ros{display:none}
 
   /* Notes footer */
@@ -572,6 +578,7 @@ body.viewer .rv-ros{display:none!important}
 body.viewer .jchip-inv{display:none!important}
 body.viewer .sched-inv-block{display:none!important}
 body.viewer #undo-btn{display:none!important}
+body.viewer .week-tag{display:none!important}
 </style>
 
 </head>
@@ -1221,22 +1228,22 @@ function buildInstanceMap(){
   INSTANCE_MAP={};if(!S)return;
   S.weeks.forEach((wk,wi)=>{
     if(!wk||!wk.a)return;
-    wk.a.forEach((cr,ci)=>{
-      (cr||[]).forEach((day,di)=>{
-        (day||[]).forEach((j,ji)=>{
+    const nd=wk.hasSunday?7:6;
+    for(let di=0;di<nd;di++){
+      wk.a.forEach((cr,ci)=>{
+        (cr&&cr[di]||[]).forEach((j,ji)=>{
           if(!j||!j.job)return;
           const k=j.job.toLowerCase();
           if(!INSTANCE_MAP[k])INSTANCE_MAP[k]=[];
           INSTANCE_MAP[k].push({wi,ci,di,ji});
         });
       });
-    });
+    }
   });
 }
 function getInstanceNum(jobName,wi,ci,di,ji){
   const k=(jobName||'').toLowerCase();
   const list=INSTANCE_MAP[k]||[];
-  if(list.length<=1)return null;
   const idx=list.findIndex(e=>e.wi===wi&&e.ci===ci&&e.di===di&&e.ji===ji);
   return idx>=0?idx+1:null;
 }
@@ -1548,7 +1555,6 @@ function openViewerInfo(j){
       ${j.s&&statNames[j.s]?`<span style="font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border:1px solid ${statColors[j.s]||'#555'};color:${statColors[j.s]||'#555'}">${statNames[j.s]}</span>`:''}
       ${j.night?`<span style="font-size:13px">🌙 Night work</span>`:''}
       ${j.oot?`<span style="font-size:13px">🛣️ Out of Town</span>`:''}
-      ${j.val?`<span style="font-family:var(--font-m);font-size:14px;font-weight:700;color:var(--green)">$${fmt(j.val)}/day</span>`:''}
     </div>
     <button onclick="document.getElementById('viewer-info-overlay').style.display='none'" style="width:100%;background:var(--yellow);border:none;padding:11px;font-family:var(--font-d);font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#000;cursor:pointer">CLOSE</button>
   `;
@@ -1560,20 +1566,19 @@ function closeViewerInfo(){document.getElementById('viewer-info-overlay').style.
 function positionModal(modalEl,e){
   const vw=window.innerWidth,vh=window.innerHeight;
   if(vw<=768){
-    // Mobile: bottom sheet — CSS handles position:fixed/bottom:0, just clear any prior inline positioning
     modalEl.style.left='';modalEl.style.top='';modalEl.style.width='';
     return;
   }
-  const x=e?.clientX??vw/2;
-  const y=e?.clientY??vh/2;
-  const mw=Math.min(parseInt(modalEl.style.width)||520,vw-20);
+  const mw=Math.min(parseInt(modalEl.style.width)||480,vw-32);
   modalEl.style.width=mw+'px';
-  let left=x-mw/2;
-  let top=y-420;
-  if(top<8)top=y+30;
-  if(top+430>vh-8)top=vh-430-8;
-  if(top<8)top=8;
-  left=Math.max(8,Math.min(vw-mw-8,left));
+  // Center horizontally on screen
+  const left=Math.max(8,Math.min(vw-mw-8,Math.round((vw-mw)/2)));
+  // Prefer below click point, but center vertically if no click
+  const clickY=e?.clientY??vh/2;
+  const mh=Math.min(500,vh-32);
+  let top=clickY+20;
+  if(top+mh>vh-8)top=clickY-mh-20;
+  if(top<8)top=Math.max(8,Math.round((vh-mh)/2));
   modalEl.style.left=left+'px';
   modalEl.style.top=top+'px';
 }
@@ -1940,7 +1945,7 @@ function buildWeek(wi,label,isNext){
   for(let ci=0;ci<wkNumCrews;ci++){
     const crew=weekCrews[ci]||{num:ci+1,members:[]};
     const cl=mkEl('div','cl');
-    cl.innerHTML=`<div class="cl-num">${crew.num}</div><div class="cl-sub">Crew</div>`;
+    cl.innerHTML=`<div class="cl-num">${crew.num}</div>${crew.members.length?`<div class="cl-sub cl-members">${crew.members.map(n=>n.split(' ')[0]).join('<br>')}</div>`:`<div class="cl-sub">Crew</div>`}`;
     cl.addEventListener('click',e=>{ if(!VIEWER_MODE) openRoster(ci,e,wi); });
     grid.appendChild(cl);
     for(let di=0;di<nd;di++){
@@ -2263,7 +2268,8 @@ function saveSummary(){
       wk.a.forEach(cr=>cr.forEach(day=>(day||[]).forEach(j=>{if(j.job===jobName)j.val=perDay;})));
     });
   }else if(amountsChanged&&(inv===0||days===0)){
-    // Amounts cleared — propagate zero to other weeks
+    // Amounts cleared — zero vals on current week and propagate zero to other weeks
+    S.weeks[wi].a.forEach(cr=>cr.forEach(day=>(day||[]).forEach(j=>{if(j.job===jobName)j.val=0;})));
     S.weeks.forEach((wk,i)=>{
       if(i===wi||!wk.jobSummary||!wk.jobSummary[jobName])return;
       wk.jobSummary[jobName].invoiceAmt=inv;

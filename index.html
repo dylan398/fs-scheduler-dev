@@ -864,7 +864,36 @@ let S = null;
 let _lastSaveTime = 0;
 const BACKUP_PATH = DB_PATH + '-backup';
 
-// ── UNDO ─────────────────────────────────────────────────────────────────
+// ── STATE VALIDATION ─────────────────────────────────────────────────────
+// Called before every save and after every migrate/restore.
+// Rebuilds any missing or empty derived data from authoritative sources.
+// Returns false if the state is structurally too broken to save safely.
+function validateState(s){
+  if(!s||!s.weeks||!Array.isArray(s.weeks)||s.weeks.length===0) return false;
+  // Must have at least one week with dates
+  if(!s.weeks.some(wk=>wk&&wk.dates&&wk.dates.length)) return false;
+  // Rebuild jobRegistry from per-week jobSummary if missing or empty
+  if(!s.jobRegistry||typeof s.jobRegistry!=='object') s.jobRegistry={};
+  if(Object.keys(s.jobRegistry).length===0){
+    s.weeks.forEach(wk=>{
+      if(!wk||!wk.jobSummary)return;
+      Object.entries(wk.jobSummary).forEach(([name,d])=>{
+        if(!s.jobRegistry[name]&&d&&(d.invoiceAmt||d.totalDays||d.note||d.pm)){
+          s.jobRegistry[name]={invoiceAmt:d.invoiceAmt||0,totalDays:d.totalDays||0,note:d.note||'',pm:d.pm||''};
+        }
+      });
+    });
+  }
+  // Ensure required top-level fields exist
+  if(!s.crews||!Array.isArray(s.crews)) s.crews=[];
+  if(typeof s.numCrews!=='number'||s.numCrews<1) s.numCrews=s.crews.length||5;
+  if(!s.jobColors||typeof s.jobColors!=='object') s.jobColors={};
+  if(!s.projectManagers||!Array.isArray(s.projectManagers)) s.projectManagers=['James Thetford','Tyler Petty'];
+  if(!s.notes) s.notes='';
+  return true;
+}
+
+
 const UNDO_STACK=[];const MAX_UNDO=50;
 function pushUndo(){
   if(!S)return;
@@ -874,8 +903,9 @@ function pushUndo(){
 }
 function doUndo(){
   if(!UNDO_STACK.length||!S)return;
-  const prev=UNDO_STACK.pop();
-  S=migrate(JSON.parse(prev));
+  const prev=JSON.parse(UNDO_STACK.pop());
+  if(!validateState(prev)){console.warn('SFS: undo state failed validation, skipping');updateUndoBtn();return;}
+  S=prev;
   save();render();updateUndoBtn();
 }
 function updateUndoBtn(){
@@ -883,40 +913,67 @@ function updateUndoBtn(){
   if(btn)btn.disabled=UNDO_STACK.length===0;
 }
 
-// ── DAILY BACKUP ─────────────────────────────────────────────────────────
+// ── BACKUP SYSTEM ────────────────────────────────────────────────────────
+// Runs every 6 hours. Keys are YYYY-MM-DD-HH (e.g. 2026-05-01-06).
+// Keeps 28 backups (7 days × 4/day). Never writes if state is invalid.
+const BACKUP_INTERVAL_HOURS = 6;
+
+function getBackupKey(){
+  const now=new Date();
+  const hh=Math.floor(now.getHours()/BACKUP_INTERVAL_HOURS)*BACKUP_INTERVAL_HOURS;
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}-${String(hh).padStart(2,'0')}`;
+}
+
 function checkDailyBackup(){
   if(!S)return;
-  const today=new Date().toISOString().split('T')[0];
-  const key='sfs_last_backup_'+DB_PATH;
-  if(localStorage.getItem(key)===today)return;
+  if(!validateState(S))return; // never backup a broken state
+  const key=getBackupKey();
+  const localKey='sfs_last_backup_'+DB_PATH;
+  if(localStorage.getItem(localKey)===key)return;
   const payload=JSON.parse(JSON.stringify(S));
   (payload.weeks||[]).forEach(wk=>{if(wk&&wk.jobSummary)wk.jobSummary=encodeJobSummary(wk.jobSummary);});
   if(payload.jobColors)payload.jobColors=encodeJobColors(payload.jobColors);
   if(payload.jobRegistry)payload.jobRegistry=encodeJobRegistry(payload.jobRegistry);
   delete payload.viewIdx;delete payload._sid;
-  DB.ref(BACKUP_PATH+'/'+today).set(payload)
-    .then(()=>{localStorage.setItem(key,today);purgeOldBackups();})
+  DB.ref(BACKUP_PATH+'/'+key).set(payload)
+    .then(()=>{localStorage.setItem(localKey,key);purgeOldBackups();})
     .catch(e=>console.warn('Backup failed:',e));
 }
+
 function purgeOldBackups(){
-  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-2);
-  const cutoffStr=cutoff.toISOString().split('T')[0];
+  const cutoff=new Date();
+  cutoff.setDate(cutoff.getDate()-7); // keep 7 days
+  const cutoffStr=cutoff.toISOString().split('T')[0]; // YYYY-MM-DD
   DB.ref(BACKUP_PATH).once('value',snap=>{
     const data=snap.val();if(!data)return;
-    Object.keys(data).forEach(dk=>{if(dk<cutoffStr)DB.ref(BACKUP_PATH+'/'+dk).remove();});
+    Object.keys(data).forEach(dk=>{
+      // Key format: YYYY-MM-DD-HH — compare date portion only
+      const datePart=dk.slice(0,10);
+      if(datePart<cutoffStr)DB.ref(BACKUP_PATH+'/'+dk).remove();
+    });
   });
 }
+
 function openRestoreBackup(){
   toggleSettings();
   DB.ref(BACKUP_PATH).once('value',snap=>{
     const data=snap.val();
     if(!data||!Object.keys(data).length){alert('No backups available.');return;}
     const dates=Object.keys(data).sort().reverse();
-    const choice=dates.length===1?dates[0]:prompt('Available backups:\n'+dates.join('\n')+'\n\nEnter date to restore (YYYY-MM-DD):',dates[0]);
+    const labels=dates.map(d=>{
+      const parts=d.split('-');// YYYY-MM-DD-HH
+      const hh=parseInt(parts[3]||0);
+      const label=`${parts[1]}/${parts[2]}/${parts[0]} at ${hh===0?'12:00 AM':hh<12?hh+':00 AM':hh===12?'12:00 PM':(hh-12)+':00 PM'}`;
+      return `${d}  →  ${label}`;
+    });
+    const choice=prompt('Available backups (newest first):\n\n'+labels.join('\n')+'\n\nPaste the date-code (e.g. 2026-05-01-06) to restore:',dates[0]);
     if(!choice)return;
-    if(!data[choice]){alert('Backup not found for '+choice);return;}
-    if(!confirm('Restore backup from '+choice+'?\nThis will overwrite the current schedule.'))return;
-    pushUndo();S=migrate(data[choice]);save();render();
+    const key=choice.trim();
+    if(!data[key]){alert('Backup not found for: '+key);return;}
+    if(!confirm('Restore backup: '+key+'?\nThis will overwrite the current schedule.'))return;
+    const restored=migrate(data[key]);
+    if(!validateState(restored)){alert('Backup from '+key+' appears corrupt or empty. Not restored.');return;}
+    pushUndo();S=restored;save();render();
   });
 }
 const MY_SESSION = Math.random().toString(36).substr(2,9);
@@ -1013,6 +1070,7 @@ function migrate(d) {
     else{wk.tbs=[];}
   });
   delete d._sid;
+  validateState(d);
   return d;
 }
 
@@ -1118,19 +1176,10 @@ function decodeJobRegistry(raw) {
 
 function save() {
   if(!S) return;
-  // Safety guard: never save an empty jobRegistry over a populated one.
-  // If jobRegistry is missing or empty but we have weeks with jobSummary data,
-  // rebuild it from the existing summaries before saving.
-  if(!S.jobRegistry||Object.keys(S.jobRegistry).length===0){
-    S.jobRegistry={};
-    (S.weeks||[]).forEach(wk=>{
-      if(!wk||!wk.jobSummary)return;
-      Object.entries(wk.jobSummary).forEach(([name,d])=>{
-        if(!S.jobRegistry[name]&&(d.invoiceAmt||d.totalDays||d.note||d.pm)){
-          S.jobRegistry[name]={invoiceAmt:d.invoiceAmt||0,totalDays:d.totalDays||0,note:d.note||'',pm:d.pm||''};
-        }
-      });
-    });
+  if(!validateState(S)){
+    console.error('SFS: save() aborted — state failed validation. S.weeks:', S.weeks?.length);
+    setSync('⚠ Save blocked');
+    return;
   }
   _lastSaveTime = Date.now();
   const payload = JSON.parse(JSON.stringify(S));

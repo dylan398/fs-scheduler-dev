@@ -1117,7 +1117,21 @@ function decodeJobRegistry(raw) {
 }
 
 function save() {
-  if(!S) return; // guard against post-logout timer firing
+  if(!S) return;
+  // Safety guard: never save an empty jobRegistry over a populated one.
+  // If jobRegistry is missing or empty but we have weeks with jobSummary data,
+  // rebuild it from the existing summaries before saving.
+  if(!S.jobRegistry||Object.keys(S.jobRegistry).length===0){
+    S.jobRegistry={};
+    (S.weeks||[]).forEach(wk=>{
+      if(!wk||!wk.jobSummary)return;
+      Object.entries(wk.jobSummary).forEach(([name,d])=>{
+        if(!S.jobRegistry[name]&&(d.invoiceAmt||d.totalDays||d.note||d.pm)){
+          S.jobRegistry[name]={invoiceAmt:d.invoiceAmt||0,totalDays:d.totalDays||0,note:d.note||'',pm:d.pm||''};
+        }
+      });
+    });
+  }
   _lastSaveTime = Date.now();
   const payload = JSON.parse(JSON.stringify(S));
   (payload.weeks || []).forEach(wk => {
@@ -1137,25 +1151,31 @@ function save() {
 }
 
 function initFirebase() {
+  let _initialLoadDone = false;
   DB.ref(DB_PATH).on('value', snap => {
     const d = snap.val();
     if(!d) {
-      // No data yet — initialize and write
-      S = initData();
-      // Use save() so jobSummary encoding is applied correctly
-      save();
-      document.getElementById('loading-screen').style.display = 'none';
-      render();
-      setSync('● Live');
+      // Only initialize if this is NOT the first transient null from Firebase
+      // connecting — wait for _initialLoadDone to confirm the path truly has no data
+      if(_initialLoadDone) return; // already loaded real data, transient disconnect — ignore
+      // First null: could be real empty path OR connection not yet ready.
+      // Use once() to confirm before writing.
+      DB.ref(DB_PATH).once('value', confirmSnap => {
+        if(confirmSnap.val()) return; // data exists, real-time listener will fire again
+        S = initData();
+        save();
+        document.getElementById('loading-screen').style.display = 'none';
+        render();
+        setSync('● Live');
+      });
       return;
     }
+    _initialLoadDone = true;
     if(d._sid === MY_SESSION) {
-      // This is our own save echoing back — skip re-render
       document.getElementById('loading-screen').style.display = 'none';
       setSync('Saved');
       return;
     }
-    // Initial load or genuine update from another device
     S = migrate(d);
     document.getElementById('loading-screen').style.display = 'none';
     render();

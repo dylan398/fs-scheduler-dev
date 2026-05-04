@@ -546,6 +546,7 @@ body.dark .crew-nc{color:#a0a8c0}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <style>
 /* ── LOGIN SCREEN ─────────────────────────────────────────────────────── */
 #login-screen{position:fixed;inset:0;background:#0d0f14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:0}
@@ -1234,18 +1235,51 @@ function initFirebase() {
 }
 function setSync(t){document.getElementById('sync-lbl').textContent=t;}
 
-// ── SIMPLE PASSWORD GATE ─────────────────────────────────────────────────
-const EDITOR_PASS = 'Semperfi3004!';
-const VIEWER_PASS = 'SFSView!';
+// ── PASSWORD GATE (hashed) ───────────────────────────────────────────────
+// Passwords are SHA-256-hashed before comparison, so the deployed bundle
+// no longer contains the plaintext. The actual security boundary is the
+// Firebase rules + anonymous auth (set up in ensureAnonAuth below).
+const EDITOR_HASH = 'ea3c2794eec6b180da9a78177c64ec0b523409703d649eb274a6468a130f9f8b';
+const VIEWER_HASH = '89e98ae3152d85c04cd006b90c3243727b2768b451dca14dbe774f1e221302f5';
 let VIEWER_MODE = false;
 
-function showLogin() {
-  const saved = localStorage.getItem('sfs_pass');
-  if(saved === EDITOR_PASS || saved === VIEWER_PASS) {
-    VIEWER_MODE = (saved === VIEWER_PASS);
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Sign in anonymously to Firebase Auth so security rules can require auth.
+// Idempotent — returns immediately if already signed in.
+async function ensureAnonAuth() {
+  try {
+    if (firebase.auth().currentUser) return firebase.auth().currentUser;
+    const cred = await firebase.auth().signInAnonymously();
+    return cred.user;
+  } catch (e) {
+    console.error('Anonymous auth failed:', e);
+    setSync('⚠ Auth failed');
+    throw e;
+  }
+}
+
+async function showLogin() {
+  // Migrate legacy plaintext localStorage entry from older builds
+  const legacy = localStorage.getItem('sfs_pass');
+  if (legacy) {
+    const legacyHash = await sha256(legacy);
+    if (legacyHash === EDITOR_HASH || legacyHash === VIEWER_HASH) {
+      localStorage.setItem('sfs_pass_hash', legacyHash);
+    }
+    localStorage.removeItem('sfs_pass');
+  }
+
+  const savedHash = localStorage.getItem('sfs_pass_hash');
+  if (savedHash === EDITOR_HASH || savedHash === VIEWER_HASH) {
+    VIEWER_MODE = (savedHash === VIEWER_HASH);
     document.body.classList.toggle('viewer', VIEWER_MODE);
     document.getElementById('mode-badge').textContent = VIEWER_MODE ? '👁 Viewer · ' + ENV : '✎ Editor · ' + ENV;
     document.getElementById('loading-screen').style.display = 'flex';
+    await ensureAnonAuth();
     initFirebase();
     return;
   }
@@ -1255,24 +1289,30 @@ function showLogin() {
   setTimeout(() => document.getElementById('login-pass').focus(), 100);
 }
 function loginKey(e) { if(e.key === 'Enter') doLogin(); }
-function doLogin() {
+async function doLogin() {
   const pass = document.getElementById('login-pass').value;
-  if(pass !== EDITOR_PASS && pass !== VIEWER_PASS) {
+  const hash = await sha256(pass);
+  if (hash !== EDITOR_HASH && hash !== VIEWER_HASH) {
     document.getElementById('login-err').textContent = 'Incorrect password.';
     document.getElementById('login-pass').value = '';
     document.getElementById('login-pass').focus();
     return;
   }
-  VIEWER_MODE = (pass === VIEWER_PASS);
-  localStorage.setItem('sfs_pass', pass);
+  VIEWER_MODE = (hash === VIEWER_HASH);
+  localStorage.setItem('sfs_pass_hash', hash);
+  localStorage.removeItem('sfs_pass');
   document.body.classList.toggle('viewer', VIEWER_MODE);
   document.getElementById('mode-badge').textContent = VIEWER_MODE ? '👁 Viewer · ' + ENV : '✎ Editor · ' + ENV;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('loading-screen').style.display = 'flex';
+  await ensureAnonAuth();
   initFirebase();
 }
 function doLogout() {
   localStorage.removeItem('sfs_pass');
+  localStorage.removeItem('sfs_pass_hash');
+  // Sign out of anonymous auth too — fresh anon session next time
+  if (firebase.auth().currentUser) firebase.auth().signOut().catch(() => {});
   window.location.reload();
 }
 

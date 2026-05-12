@@ -866,15 +866,15 @@ const DB = firebase.database();
 
 let S = null;
 let _lastSaveTime = 0;
+let _initialLoadDone = false;
 const BACKUP_PATH = DB_PATH + '-backup';
 
 // ── STATE VALIDATION ─────────────────────────────────────────────────────
 // Called before every save and after every migrate/restore.
-// Rebuilds any missing or empty derived data from authoritative sources.
-// Returns false if the state is structurally too broken to save safely.
+// Repairs missing or malformed fields in-place; returns false only when the
+// state is so structurally broken that it cannot be used at all.
 function validateState(s){
   if(!s||!s.weeks||!Array.isArray(s.weeks)||s.weeks.length===0) return false;
-  // Must have at least one week with dates
   if(!s.weeks.some(wk=>wk&&wk.dates&&wk.dates.length)) return false;
   // Rebuild jobRegistry from per-week jobSummary if missing or empty
   if(!s.jobRegistry||typeof s.jobRegistry!=='object') s.jobRegistry={};
@@ -888,12 +888,29 @@ function validateState(s){
       });
     });
   }
-  // Ensure required top-level fields exist
+  // Top-level fields
   if(!s.crews||!Array.isArray(s.crews)) s.crews=[];
   if(typeof s.numCrews!=='number'||s.numCrews<1) s.numCrews=s.crews.length||5;
   if(!s.jobColors||typeof s.jobColors!=='object') s.jobColors={};
   if(!s.projectManagers||!Array.isArray(s.projectManagers)) s.projectManagers=['James Thetford','Tyler Petty'];
   if(!s.notes) s.notes='';
+  // Per-week structural repair — ensure a[crew][day] dimensions are correct
+  s.weeks.forEach(wk=>{
+    if(!wk)return;
+    const nc=typeof wk.numCrews==='number'&&wk.numCrews>0?wk.numCrews:s.numCrews;
+    const nd=wk.hasSunday?7:6;
+    if(!Array.isArray(wk.a))wk.a=[];
+    while(wk.a.length<nc)wk.a.push(Array.from({length:nd},()=>[]));
+    for(let ci=0;ci<wk.a.length;ci++){
+      if(!Array.isArray(wk.a[ci]))wk.a[ci]=Array.from({length:nd},()=>[]);
+      while(wk.a[ci].length<nd)wk.a[ci].push([]);
+      for(let di=0;di<nd;di++){if(!Array.isArray(wk.a[ci][di]))wk.a[ci][di]=[];}
+    }
+    if(!wk.jobSummary||typeof wk.jobSummary!=='object')wk.jobSummary={};
+    if(!Array.isArray(wk.satRoster))wk.satRoster=[];
+    if(!Array.isArray(wk.tbs))wk.tbs=[];
+    if(!Array.isArray(wk.crews)||!wk.crews.length)wk.crews=JSON.parse(JSON.stringify(s.crews));
+  });
   return true;
 }
 
@@ -995,86 +1012,121 @@ function fbArr(val, def) {
 }
 
 function migrate(d) {
-  if(!d) return initData();
-  if(!d.numCrews) d.numCrews = 5;
+  if(!d||typeof d!=='object') return initData();
 
-  // Restore crews array
-  d.crews = fbArr(d.crews, []).filter(Boolean);
-  while(d.crews.length < d.numCrews) d.crews.push({num:d.crews.length+1, members:[]});
-  d.crews.forEach((c,i) => {
-    if(!c) { d.crews[i]={num:i+1,members:[]}; return; }
-    c.members = fbArr(c.members, []).filter(Boolean);
-  });
+  // Global top-level scalars
+  if(typeof d.numCrews!=='number'||d.numCrews<1) d.numCrews=5;
+  if(!d.notes||typeof d.notes!=='string') d.notes='';
 
-  // Restore weeks array
-  d.weeks = fbArr(d.weeks, []).filter(Boolean);
+  // Global crews template (default member roster used when weeks have no overrides)
+  d.crews=fbArr(d.crews,[]).filter(Boolean);
+  while(d.crews.length<d.numCrews) d.crews.push({num:d.crews.length+1,members:[]});
+  d.crews=d.crews.map((c,i)=>({
+    num:typeof c.num==='number'?c.num:i+1,
+    members:fbArr(c.members,[]).filter(s=>s&&typeof s==='string')
+  }));
 
-  d.weeks.forEach(wk => {
-    if(!wk) return;
-    wk.jobSummary = decodeJobSummary(wk.jobSummary);
-    wk.satRoster = fbArr(wk.satRoster, []).filter(Boolean);
-    if(wk.hasSunday === undefined) wk.hasSunday = false;
-    const nd = wk.hasSunday ? 7 : 6;
+  // Weeks — single loop processes every field in strict dependency order
+  d.weeks=fbArr(d.weeks,[]).filter(Boolean);
+  d.weeks.forEach(wk=>{
+    if(!wk||typeof wk!=='object')return;
 
-    // Restore nested a[crew][day] arrays
-    const wkNc=(typeof wk.numCrews==='number'&&wk.numCrews>0)?wk.numCrews:d.numCrews;
-    wk.a = fbArr(wk.a, []);
-    while(wk.a.length < wkNc) wk.a.push(null);
-    wk.a = wk.a.slice(0, wkNc);
-    for(let ci = 0; ci < wk.a.length; ci++) {
-      let cr = fbArr(wk.a[ci], []);
-      while(cr.length < nd) cr.push(null);
-      cr = cr.slice(0, nd);
-      wk.a[ci] = cr;
-      // Use for loop (not forEach) so sparse array holes are visited, not skipped
-      for(let di = 0; di < nd; di++) {
-        const cell = cr[di];
-        if(!cell || !Array.isArray(cell)) {
-          wk.a[ci][di] = cell ? fbArr(cell, []).filter(j => j && j.job) : [];
-        } else {
-          wk.a[ci][di] = cell.filter(j => j && j.job);
-        }
+    // hasSunday must be resolved before nd (day count) is computed
+    if(typeof wk.hasSunday!=='boolean') wk.hasSunday=false;
+    const nd=wk.hasSunday?7:6;
+
+    // numCrews must be resolved before wk.a is reconstructed
+    if(typeof wk.numCrews!=='number'||wk.numCrews<1) wk.numCrews=d.numCrews;
+    const nc=wk.numCrews;
+
+    // Dates array — "Mon D" strings, padded to nd if short
+    wk.dates=fbArr(wk.dates,[]).filter(s=>s&&typeof s==='string');
+    while(wk.dates.length<nd) wk.dates.push('');
+
+    // Assignment grid wk.a[crew][day] — fully rebuild from Firebase object/array
+    wk.a=fbArr(wk.a,[]);
+    while(wk.a.length<nc) wk.a.push(null);
+    wk.a=wk.a.slice(0,nc);
+    for(let ci=0;ci<nc;ci++){
+      const rawRow=fbArr(wk.a[ci],[]);
+      const row=[];
+      for(let di=0;di<nd;di++){
+        const rawCell=rawRow[di];
+        const cellArr=!rawCell?[]:Array.isArray(rawCell)?rawCell:fbArr(rawCell,[]);
+        row.push(cellArr
+          .filter(j=>j&&typeof j.job==='string'&&j.job)
+          .map(j=>({
+            job:j.job,
+            note:typeof j.note==='string'?j.note:'',
+            s:STAT_KEYS.includes(j.s)?j.s:'working',
+            val:typeof j.val==='number'&&isFinite(j.val)?j.val:0,
+            night:!!j.night,
+            oot:!!j.oot
+          }))
+        );
+      }
+      wk.a[ci]=row;
+    }
+
+    // jobSummary — encoded in Firebase as array, decode back to keyed object
+    wk.jobSummary=decodeJobSummary(wk.jobSummary);
+
+    // satRoster — simple array of name strings
+    wk.satRoster=fbArr(wk.satRoster,[]).filter(s=>s&&typeof s==='string');
+
+    // Numeric week fields
+    if(typeof wk.target!=='number'||!isFinite(wk.target)) wk.target=0;
+    if(typeof wk.scheduledInvoice!=='number'||!isFinite(wk.scheduledInvoice)) wk.scheduledInvoice=0;
+
+    // Week-specific crews — restore from Firebase or inherit from global template
+    if(wk.crews){
+      if(!Array.isArray(wk.crews)){
+        const raw=fbArr(wk.crews,null);
+        wk.crews=(raw&&raw.length)
+          ?raw.filter(Boolean).map((c,i)=>({
+              num:typeof c.num==='number'?c.num:i+1,
+              members:fbArr(c.members,[]).filter(s=>s&&typeof s==='string')
+            }))
+          :null;
+      }else if(wk.crews.length===0){
+        wk.crews=null;
       }
     }
+    if(!wk.crews) wk.crews=JSON.parse(JSON.stringify(d.crews||[]));
+    while(wk.crews.length<nc) wk.crews.push({num:wk.crews.length+1,members:[]});
 
-    // (totalDays default handled in decodeJobSummary)
-  });
-
-  if(d.viewIdx === undefined) d.viewIdx = 0;
-  // viewIdx is local — restore from localStorage and anchor to current week
-  d.viewIdx = getLocalViewIdx(d);
-  if(!d.notes) d.notes = '';
-  if(!d.jobColors) d.jobColors = {};
-  else d.jobColors = decodeJobColors(d.jobColors);
-  if(!d.jobRegistry) d.jobRegistry = {};
-  else d.jobRegistry = decodeJobRegistry(d.jobRegistry);
-  d.weeks.forEach(wk => { if(wk && wk.target === undefined) wk.target = 0; });
-  d.weeks.forEach(wk => { if(wk && wk.scheduledInvoice === undefined) wk.scheduledInvoice = 0; });
-  d.weeks.forEach(wk => {
-    if(!wk) return;
-    if(wk.numCrews===undefined) wk.numCrews=d.numCrews||5;
-    if(wk.crews) {
-      if(!Array.isArray(wk.crews)) {
-        const raw=fbArr(wk.crews,null);
-        wk.crews=(raw&&raw.length)?raw.filter(Boolean).map((c,i)=>{if(!c)return{num:i+1,members:[]};c.members=fbArr(c.members,[]).filter(Boolean);return c;}):null;
-      } else if(wk.crews.length===0) { wk.crews=null; }
-    }
-    // Always explicit — never null
-    if(!wk.crews){
-      wk.crews=JSON.parse(JSON.stringify(d.crews||[]));
-      while(wk.crews.length<wk.numCrews)wk.crews.push({num:wk.crews.length+1,members:[]});
+    // TBS queue — jobs pending scheduling for this week
+    if(wk.tbs){
+      wk.tbs=fbArr(wk.tbs,[])
+        .filter(Boolean)
+        .map(t=>({
+          name:t.name||'',
+          pm:t.pm||'',
+          tbsNote:t.tbsNote||'',
+          days:typeof t.days==='number'&&isFinite(t.days)?t.days:0,
+          value:typeof t.value==='number'&&isFinite(t.value)?t.value:0
+        }))
+        .filter(t=>t.name);
+    }else{
+      wk.tbs=[];
     }
   });
-  if(!d.projectManagers) d.projectManagers=['James Thetford','Tyler Petty'];
-  else d.projectManagers=fbArr(d.projectManagers,[]).filter(Boolean);
-  // Migrate tbs per week
-  d.weeks.forEach(wk=>{
-    if(!wk)return;
-    if(wk.tbs){wk.tbs=fbArr(wk.tbs,[]).filter(Boolean).map(t=>({name:t.name||'',pm:t.pm||'',tbsNote:t.tbsNote||'',days:t.days||0,value:t.value||0})).filter(t=>t.name);}
-    else{wk.tbs=[];}
-  });
+
+  // Top-level lookups (encoded in Firebase to handle special characters in job names)
+  d.jobColors=d.jobColors?decodeJobColors(d.jobColors):{};
+  d.jobRegistry=d.jobRegistry?decodeJobRegistry(d.jobRegistry):{};
+  d.projectManagers=d.projectManagers
+    ?fbArr(d.projectManagers,[]).filter(s=>s&&typeof s==='string')
+    :['James Thetford','Tyler Petty'];
+
+  // viewIdx is local-only — never comes from Firebase
+  d.viewIdx=getLocalViewIdx(d);
   delete d._sid;
-  validateState(d);
+
+  if(!validateState(d)){
+    console.error('SFS: migrate() produced invalid state — falling back to initData');
+    return initData();
+  }
   return d;
 }
 
@@ -1180,6 +1232,10 @@ function decodeJobRegistry(raw) {
 
 function save() {
   if(!S) return;
+  if(!_initialLoadDone){
+    console.warn('SFS: save() called before initial load — skipped');
+    return;
+  }
   if(!validateState(S)){
     console.error('SFS: save() aborted — state failed validation. S.weeks:', S.weeks?.length);
     setSync('⚠ Save blocked');
@@ -1204,18 +1260,16 @@ function save() {
 }
 
 function initFirebase() {
-  let _initialLoadDone = false;
   DB.ref(DB_PATH).on('value', snap => {
     const d = snap.val();
     if(!d) {
-      // Only initialize if this is NOT the first transient null from Firebase
-      // connecting — wait for _initialLoadDone to confirm the path truly has no data
-      if(_initialLoadDone) return; // already loaded real data, transient disconnect — ignore
-      // First null: could be real empty path OR connection not yet ready.
-      // Use once() to confirm before writing.
+      if(_initialLoadDone) return; // transient disconnect after real load — ignore
+      // First null: path may be empty OR connection not yet ready.
+      // Use once() to confirm before writing default data.
       DB.ref(DB_PATH).once('value', confirmSnap => {
         if(confirmSnap.val()) return; // data exists, real-time listener will fire again
         S = initData();
+        _initialLoadDone = true;
         save();
         document.getElementById('loading-screen').style.display = 'none';
         render();
@@ -1229,7 +1283,15 @@ function initFirebase() {
       setSync('Saved');
       return;
     }
-    S = migrate(d);
+    const migrated = migrate(d);
+    if(!migrated||!migrated.weeks||!migrated.weeks.length){
+      console.error('SFS: incoming Firebase data could not be migrated — not applying');
+      document.getElementById('loading-screen').style.display = 'none';
+      if(!S){ S = initData(); render(); }
+      setSync('⚠ Sync error');
+      return;
+    }
+    S = migrated;
     document.getElementById('loading-screen').style.display = 'none';
     render();
     setSync('● Live');
@@ -2485,13 +2547,15 @@ function applyDefaultCrews(){
 }
 function saveAsDefaultCrews(){
   const lines=document.getElementById('r-members').value.split('\n').map(l=>l.trim()).filter(Boolean);
-  // Only update the default template — this does NOT change any week's displayed crews
   while(S.crews.length<=AR)S.crews.push({num:S.crews.length+1,members:[]});
   S.crews[AR].members=lines;
-  // Save S.crews to Firebase without triggering a render
   const btn=document.getElementById('save-default-btn');
   if(btn){btn.textContent='✓ Saved as Default';setTimeout(()=>btn.textContent='Save as Default',1500);}
-  save();
+  const patch={'crews':S.crews,'_sid':MY_SESSION};
+  setSync('Saving…');
+  DB.ref(DB_PATH).update(patch)
+    .then(()=>setSync('Saved'))
+    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
 }
 function openSatRoster(wi,e){
   AR='sat_'+wi;
@@ -2505,17 +2569,28 @@ function closeRoster(){document.getElementById('roster-ov').classList.add('hidde
 function saveRoster(){
   const lines=document.getElementById('r-members').value.split('\n').map(l=>l.trim()).filter(Boolean);
   pushUndo();
-  if(typeof AR==='string'&&AR.startsWith('sat_'))S.weeks[parseInt(AR.split('_')[1])].satRoster=lines;
-  else if(_rosterWi!=null){
-    // Save to week-specific crews
+  const patch={};
+  if(typeof AR==='string'&&AR.startsWith('sat_')){
+    const wi=parseInt(AR.split('_')[1]);
+    S.weeks[wi].satRoster=lines;
+    patch['weeks/'+wi+'/satRoster']=lines;
+  }else if(_rosterWi!=null){
     const wk=S.weeks[_rosterWi];
     if(!wk.crews)wk.crews=JSON.parse(JSON.stringify(S.crews));
     while(wk.crews.length<=AR)wk.crews.push({num:wk.crews.length+1,members:[]});
     wk.crews[AR].members=lines;
+    patch['weeks/'+_rosterWi+'/crews']=wk.crews;
   }else{
-    while(S.crews.length<=AR)S.crews.push({num:S.crews.length+1,members:[]});S.crews[AR].members=lines;
+    while(S.crews.length<=AR)S.crews.push({num:S.crews.length+1,members:[]});
+    S.crews[AR].members=lines;
+    patch['crews']=S.crews;
   }
-  save();render();closeRoster();
+  patch['_sid']=MY_SESSION;
+  setSync('Saving…');
+  DB.ref(DB_PATH).update(patch)
+    .then(()=>setSync('Saved'))
+    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
+  render();closeRoster();
 }
 
 // ── ADJUST CREWS PER WEEK ─────────────────────────────────────────────────
@@ -2550,7 +2625,28 @@ function adjustWeekCrews(wi,delta){
     .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
   render();
 }
-function toggleSunday(wi){pushUndo();const wk=S.weeks[wi];wk.hasSunday=!wk.hasSunday;if(wk.hasSunday){if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});}else{wk.dates=wk.dates.slice(0,6);wk.a.forEach(cr=>cr.splice(6,1));}save();render();}
+function toggleSunday(wi){
+  pushUndo();
+  const wk=S.weeks[wi];
+  wk.hasSunday=!wk.hasSunday;
+  if(wk.hasSunday){
+    if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);
+    wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});
+  }else{
+    wk.dates=wk.dates.slice(0,6);
+    wk.a.forEach(cr=>cr.splice(6,1));
+  }
+  const patch={};
+  patch['weeks/'+wi+'/hasSunday']=wk.hasSunday;
+  patch['weeks/'+wi+'/dates']=wk.dates;
+  patch['weeks/'+wi+'/a']=wk.a;
+  patch['_sid']=MY_SESSION;
+  setSync('Saving…');
+  DB.ref(DB_PATH).update(patch)
+    .then(()=>setSync('Saved'))
+    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
+  render();
+}
 function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;if(_presentSingleWeek)stopSpotlight();S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}
 function updateNav(){
   document.getElementById('nav-prev').disabled=S.viewIdx===0;

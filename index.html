@@ -2537,7 +2537,18 @@ function adjustWeekCrews(wi,delta){
     wk.a=wk.a.slice(0,n);
   }
   wk.numCrews=n;
-  save();render();
+  // Targeted multi-path update — only overwrites this week's shape fields,
+  // leaving every other week's data untouched in Firebase.
+  const patch={};
+  patch['weeks/'+wi+'/numCrews']=n;
+  patch['weeks/'+wi+'/crews']=wk.crews;
+  patch['weeks/'+wi+'/a']=wk.a;
+  patch['_sid']=MY_SESSION;
+  setSync('Saving…');
+  DB.ref(DB_PATH).update(patch)
+    .then(()=>setSync('Saved'))
+    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
+  render();
 }
 function toggleSunday(wi){pushUndo();const wk=S.weeks[wi];wk.hasSunday=!wk.hasSunday;if(wk.hasSunday){if(!wk.dates[6])wk.dates[6]=addDays(wk.dates[5],1);wk.a.forEach(cr=>{if(cr.length<7)cr.push([]);});}else{wk.dates=wk.dates.slice(0,6);wk.a.forEach(cr=>cr.splice(6,1));}save();render();}
 function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;if(_presentSingleWeek)stopSpotlight();S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}

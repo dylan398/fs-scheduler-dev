@@ -1470,7 +1470,10 @@ function getWeekCrews(wi){
   const nc=getWeekNumCrews(wi);
   const base=(wk&&wk.crews&&wk.crews.length)?wk.crews:S.crews;
   const result=[];
-  for(let i=0;i<nc;i++) result.push(base[i]||S.crews[i]||{num:i+1,members:[]});
+  for(let i=0;i<nc;i++){
+    const c=base[i]||S.crews[i]||{num:i+1,members:[]};
+    result.push({num:typeof c.num==='number'?c.num:i+1, members:Array.isArray(c.members)?c.members:[]});
+  }
   return result;
 }
 

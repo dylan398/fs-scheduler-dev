@@ -1259,6 +1259,33 @@ function save() {
   localStorage.setItem('sfs_viewIdx', S.viewIdx);
 }
 
+// Writes ALL fields of a single week via targeted multi-path update.
+// Guarantees Firebase never has a partial week node missing dates/numCrews/etc.
+// Use this instead of inline patches whenever mutating a single week.
+function saveWeek(wi) {
+  if(!S||!_initialLoadDone) return;
+  const wk=S.weeks[wi];
+  if(!wk) return;
+  const base='weeks/'+wi+'/';
+  const patch={};
+  patch[base+'numCrews']=wk.numCrews;
+  patch[base+'hasSunday']=!!wk.hasSunday;
+  patch[base+'dates']=wk.dates;
+  patch[base+'a']=wk.a;
+  patch[base+'crews']=wk.crews||JSON.parse(JSON.stringify(S.crews));
+  patch[base+'jobSummary']=encodeJobSummary(wk.jobSummary||{});
+  patch[base+'satRoster']=wk.satRoster||[];
+  patch[base+'target']=typeof wk.target==='number'?wk.target:0;
+  patch[base+'scheduledInvoice']=typeof wk.scheduledInvoice==='number'?wk.scheduledInvoice:0;
+  patch[base+'tbs']=wk.tbs||[];
+  patch['_sid']=MY_SESSION;
+  setSync('Saving…');
+  DB.ref(DB_PATH).update(patch)
+    .then(()=>setSync('Saved'))
+    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
+  localStorage.setItem('sfs_viewIdx',S.viewIdx);
+}
+
 function initFirebase() {
   DB.ref(DB_PATH).on('value', snap => {
     const d = snap.val();
@@ -2569,27 +2596,25 @@ function closeRoster(){document.getElementById('roster-ov').classList.add('hidde
 function saveRoster(){
   const lines=document.getElementById('r-members').value.split('\n').map(l=>l.trim()).filter(Boolean);
   pushUndo();
-  const patch={};
   if(typeof AR==='string'&&AR.startsWith('sat_')){
     const wi=parseInt(AR.split('_')[1]);
     S.weeks[wi].satRoster=lines;
-    patch['weeks/'+wi+'/satRoster']=lines;
+    saveWeek(wi);
   }else if(_rosterWi!=null){
     const wk=S.weeks[_rosterWi];
     if(!wk.crews)wk.crews=JSON.parse(JSON.stringify(S.crews));
     while(wk.crews.length<=AR)wk.crews.push({num:wk.crews.length+1,members:[]});
     wk.crews[AR].members=lines;
-    patch['weeks/'+_rosterWi+'/crews']=wk.crews;
+    saveWeek(_rosterWi);
   }else{
     while(S.crews.length<=AR)S.crews.push({num:S.crews.length+1,members:[]});
     S.crews[AR].members=lines;
-    patch['crews']=S.crews;
+    const patch={'crews':S.crews,'_sid':MY_SESSION};
+    setSync('Saving…');
+    DB.ref(DB_PATH).update(patch)
+      .then(()=>setSync('Saved'))
+      .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
   }
-  patch['_sid']=MY_SESSION;
-  setSync('Saving…');
-  DB.ref(DB_PATH).update(patch)
-    .then(()=>setSync('Saved'))
-    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
   render();closeRoster();
 }
 
@@ -2612,17 +2637,7 @@ function adjustWeekCrews(wi,delta){
     wk.a=wk.a.slice(0,n);
   }
   wk.numCrews=n;
-  // Targeted multi-path update — only overwrites this week's shape fields,
-  // leaving every other week's data untouched in Firebase.
-  const patch={};
-  patch['weeks/'+wi+'/numCrews']=n;
-  patch['weeks/'+wi+'/crews']=wk.crews;
-  patch['weeks/'+wi+'/a']=wk.a;
-  patch['_sid']=MY_SESSION;
-  setSync('Saving…');
-  DB.ref(DB_PATH).update(patch)
-    .then(()=>setSync('Saved'))
-    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
+  saveWeek(wi);
   render();
 }
 function toggleSunday(wi){
@@ -2636,15 +2651,7 @@ function toggleSunday(wi){
     wk.dates=wk.dates.slice(0,6);
     wk.a.forEach(cr=>cr.splice(6,1));
   }
-  const patch={};
-  patch['weeks/'+wi+'/hasSunday']=wk.hasSunday;
-  patch['weeks/'+wi+'/dates']=wk.dates;
-  patch['weeks/'+wi+'/a']=wk.a;
-  patch['_sid']=MY_SESSION;
-  setSync('Saving…');
-  DB.ref(DB_PATH).update(patch)
-    .then(()=>setSync('Saved'))
-    .catch(e=>{console.error('Firebase save error:',e);setSync('⚠ Save failed');});
+  saveWeek(wi);
   render();
 }
 function navigate(dir){const ni=S.viewIdx+dir;if(ni<0)return;if(_presentSingleWeek)stopSpotlight();S.viewIdx=ni;while(S.weeks.length<=S.viewIdx+1)addNextWeek();localStorage.setItem('sfs_viewIdx',S.viewIdx);render();}

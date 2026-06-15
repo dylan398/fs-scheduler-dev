@@ -1125,6 +1125,32 @@ function migrate(d) {
       wk.a[ci]=row;
     }
 
+    // Custom cards grid wk.cards[crew][day] — rebuild from Firebase object/array (else ensureCards wipes it)
+    wk.cards=fbArr(wk.cards,[]);
+    while(wk.cards.length<nc) wk.cards.push(null);
+    wk.cards=wk.cards.slice(0,nc);
+    for(let ci=0;ci<nc;ci++){
+      const rawRow=fbArr(wk.cards[ci],[]);
+      const crow=[];
+      for(let di=0;di<nd;di++){
+        const rawCell=rawRow[di];
+        const cellArr=!rawCell?[]:Array.isArray(rawCell)?rawCell:fbArr(rawCell,[]);
+        crow.push(cellArr
+          .filter(c=>c&&typeof c==='object'&&((typeof c.title==='string'&&c.title)||(typeof c.detail==='string'&&c.detail)))
+          .map(c=>{
+            const o={
+              title:typeof c.title==='string'?c.title:'',
+              detail:typeof c.detail==='string'?c.detail:'',
+              color:typeof c.color==='string'?c.color:'#f5c842'
+            };
+            if(typeof c.gid==='string'&&c.gid) o.gid=c.gid;
+            return o;
+          })
+        );
+      }
+      wk.cards[ci]=crow;
+    }
+
     // jobSummary — encoded in Firebase as array, decode back to keyed object
     wk.jobSummary=decodeJobSummary(wk.jobSummary);
 

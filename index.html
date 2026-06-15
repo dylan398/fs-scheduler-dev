@@ -136,7 +136,12 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
 /* CUSTOM (NON-JOB) CARDS — pinned to bottom of cell, visually distinct from jobs */
 .card-wrap{position:relative;margin-top:2px}
 .card-wrap.first-card{margin-top:5px;padding-top:5px;border-top:1px dashed #d4cfc4}
-.custom-card{border-left:3px solid var(--cc-color,var(--yellow));background:#fdf6dd;padding:4px 6px 4px 8px;position:relative}
+.custom-card{border-left:3px solid var(--cc-color,var(--yellow));background:#fdf6dd;padding:4px 13px 4px 8px;position:relative;touch-action:none}
+.card-resize{position:absolute;top:0;right:0;width:11px;height:100%;cursor:ew-resize;z-index:1;display:flex;align-items:center;justify-content:center}
+.card-resize::after{content:'';width:2px;height:60%;max-height:18px;background:repeating-linear-gradient(to bottom,var(--cc-color,#c9b970) 0 2px,transparent 2px 4px);opacity:.7;border-radius:1px}
+.card-resize:hover::after{opacity:1;width:3px}
+.card-span-hl{outline:2px dashed var(--yellow);outline-offset:-2px;background:rgba(245,200,66,.08)}
+.pres-card .card-resize::after{background:repeating-linear-gradient(to bottom,var(--yellow) 0 2px,transparent 2px 4px)}
 .custom-card .cc-name{display:flex;align-items:center;gap:4px;font-family:var(--font-d);font-weight:800;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:#6b5a14;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px}
 .custom-card .cc-tag{font-size:10px;opacity:.85;flex-shrink:0}
 .custom-card .cc-detail{font-size:11px;color:#7a6a2a;line-height:1.25;white-space:pre-wrap;word-break:break-word;margin-top:1px}
@@ -519,7 +524,7 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 .pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.2)}
 .pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#14171f;font-size:22px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:16px;transition:color .12s}
 .pres-add:hover{color:#2e3448}
-.pres-card{flex:none;border-left:9px solid var(--yellow);background:#2c2a1c;padding:6px 9px 5px 10px;overflow:hidden;position:relative;display:flex;flex-direction:column;border-radius:1px;margin-top:3px}
+.pres-card{flex:none;border-left:9px solid var(--yellow);background:#2c2a1c;padding:6px 16px 5px 10px;overflow:hidden;position:relative;display:flex;flex-direction:column;border-radius:1px;margin-top:3px}
 .pres-card-name{font-family:var(--font-d);font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:.03em;color:#f0d97a;line-height:1.1;overflow:hidden;padding-right:12px;word-break:break-word}
 .pres-card-detail{font-size:12px;color:#c4b878;overflow:hidden;margin-top:2px;word-break:break-word;white-space:pre-wrap}
 .pres-add.has-jobs{flex:0 0 12px;font-size:10px;min-height:0;color:#14171f}
@@ -1695,6 +1700,121 @@ function attachCardDrag(cardEl,wi,di,ci,ji){
   });
 }
 
+// ── CUSTOM CARD DRAG (move between cells) ─────────────────────────────────
+function attachCustomCardDrag(cardEl,wi,di,ci,ki){
+  if(VIEWER_MODE)return;
+  cardEl.addEventListener('pointerdown',e=>{
+    if(e.target.classList.contains('jremove')||e.target.classList.contains('pres-jremove')||e.target.classList.contains('card-resize'))return;
+    if(e.button>0)return;
+    e.preventDefault();
+    cardEl.setPointerCapture(e.pointerId);
+    const sx=e.clientX,sy=e.clientY;
+    let dragging=false,ghost=null;
+    const onMove=ev=>{
+      if(!dragging&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>8){
+        dragging=true;
+        const cd=S.weeks[wi].cards?.[ci]?.[di]?.[ki];
+        if(!cd)return;
+        ghost=createGhost(cd.title||'Card');
+        cardEl.classList.add('dragging-src');
+        DRAG={type:'card',wi,di,ci,ki,ghost};
+      }
+      if(dragging&&ghost){DRAG.dropY=ev.clientY;moveGhost(ghost,ev.clientX,ev.clientY);highlightDrop(ev.clientX,ev.clientY);}
+    };
+    const onUp=ev=>{
+      cardEl.removeEventListener('pointermove',onMove);
+      cardEl.removeEventListener('pointerup',onUp);
+      cardEl.classList.remove('dragging-src');
+      if(dragging){
+        clearHighlight();
+        if(ghost&&ghost.parentNode)document.body.removeChild(ghost);
+        const tgt=getDropCell(ev.clientX,ev.clientY);
+        performCardDrop({type:'card',wi,di,ci,ki},tgt);
+        DRAG=null;
+      }else{
+        openEditCard(wi,di,ci,ki,ev);
+      }
+    };
+    cardEl.addEventListener('pointermove',onMove);
+    cardEl.addEventListener('pointerup',onUp);
+  });
+}
+function performCardDrop(src,tgt){
+  if(!tgt)return;
+  const{wi:twi,di:tdi,ci:tci}=tgt;
+  if(src.wi===twi&&src.di===tdi&&src.ci===tci)return;
+  ensureCards(src.wi);ensureCards(twi);
+  const cd=S.weeks[src.wi].cards?.[src.ci]?.[src.di]?.[src.ki];
+  if(!cd)return;
+  pushUndo();
+  // Moving detaches a card from any day-group (becomes standalone in its new cell)
+  S.weeks[twi].cards[tci][tdi].push({title:cd.title,detail:cd.detail,color:cd.color});
+  S.weeks[src.wi].cards[src.ci][src.di].splice(src.ki,1);
+  save();if(_presentMode)renderPresent();else render();
+}
+
+// ── CUSTOM CARD EXTEND (drag right edge across days) ──────────────────────
+function clearCardSpanHighlight(){document.querySelectorAll('.card-span-hl').forEach(el=>el.classList.remove('card-span-hl'));}
+function highlightCardSpan(wi,ci,a,b){
+  clearCardSpanHighlight();
+  for(let d=a;d<=b;d++){
+    const el=document.querySelector(`.cell[data-wi="${wi}"][data-ci="${ci}"][data-di="${d}"],.pres-cell[data-wi="${wi}"][data-ci="${ci}"][data-di="${d}"]`);
+    if(el)el.classList.add('card-span-hl');
+  }
+}
+function attachCardResize(handleEl,wi,di,ci,ki){
+  if(VIEWER_MODE)return;
+  handleEl.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;
+    e.preventDefault();e.stopPropagation();
+    handleEl.setPointerCapture(e.pointerId);
+    const nd=S.weeks[wi].hasSunday?7:6;
+    const cd=S.weeks[wi].cards?.[ci]?.[di]?.[ki];
+    if(!cd){return;}
+    let gid=cd.gid,anchorDi=di;
+    if(gid){for(let d=0;d<nd;d++){if((S.weeks[wi].cards?.[ci]?.[d]||[]).some(c=>c.gid===gid)){anchorDi=d;break;}}}
+    let curEnd=di;
+    highlightCardSpan(wi,ci,anchorDi,curEnd);
+    const onMove=ev=>{
+      const tcell=getDropCell(ev.clientX,ev.clientY);
+      if(tcell&&tcell.wi===wi&&tcell.ci===ci){
+        curEnd=Math.max(anchorDi,Math.min(nd-1,tcell.di));
+        highlightCardSpan(wi,ci,anchorDi,curEnd);
+      }
+    };
+    const onUp=ev=>{
+      handleEl.removeEventListener('pointermove',onMove);
+      handleEl.removeEventListener('pointerup',onUp);
+      clearCardSpanHighlight();
+      reconcileCardGroup(wi,ci,anchorDi,curEnd,cd);
+    };
+    handleEl.addEventListener('pointermove',onMove);
+    handleEl.addEventListener('pointerup',onUp);
+  });
+}
+function reconcileCardGroup(wi,ci,anchorDi,endDi,template){
+  ensureCards(wi);
+  const nd=S.weeks[wi].hasSunday?7:6;
+  // No-op: a standalone card that wasn't actually extended
+  if(!template.gid&&endDi<=anchorDi)return;
+  pushUndo();
+  let gid=template.gid||('cg'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  template.gid=gid; // tag the original card so the anchor day already has a member
+  const content={title:template.title,detail:template.detail,color:template.color};
+  for(let d=anchorDi;d<=endDi;d++){
+    const arr=S.weeks[wi].cards[ci][d];
+    const existing=arr.find(c=>c.gid===gid);
+    if(existing){existing.title=content.title;existing.detail=content.detail;existing.color=content.color;}
+    else{arr.push({title:content.title,detail:content.detail,color:content.color,gid});}
+  }
+  // Remove group members outside the new span (retract)
+  for(let d=0;d<nd;d++){
+    if(d>=anchorDi&&d<=endDi)continue;
+    if(S.weeks[wi].cards[ci][d])S.weeks[wi].cards[ci][d]=S.weeks[wi].cards[ci][d].filter(c=>c.gid!==gid);
+  }
+  save();if(_presentMode)renderPresent();else render();
+}
+
 function attachChipDrag(chipEl,wi,jobName){
   if(VIEWER_MODE) return;
   // On mobile: no drag — just tap to open summary
@@ -2136,8 +2256,12 @@ function buildPresentWeek(wi, isNext){
           rm.addEventListener('pointerdown',e=>e.stopPropagation());
           rm.addEventListener('click',e=>{e.stopPropagation();removeCard(e,wi,di,ci,ki);});
           cardEl.appendChild(rm);
-          cardEl.style.cursor='pointer';
-          cardEl.addEventListener('click',e=>{e.stopPropagation();openEditCard(wi,di,ci,ki,e);});
+          const h=document.createElement('div');
+          h.className='card-resize';h.title='Drag to extend across days';
+          cardEl.appendChild(h);
+          attachCardResize(h,wi,di,ci,ki);
+          cardEl.style.cursor='grab';
+          attachCustomCardDrag(cardEl,wi,di,ci,ki);
         }
         cell.appendChild(cardEl);
       });
@@ -2255,8 +2379,14 @@ function buildWeek(wi,label,isNext){
         const cardEl=mkEl('div','custom-card');
         if(cd.color)cardEl.style.setProperty('--cc-color',cd.color);
         const rm=VIEWER_MODE?'':`<button class="jremove" onpointerdown="stopProp(event)" onclick="removeCard(event,${wi},${di},${ci},${ki})">×</button>`;
-        cardEl.innerHTML=`${rm}<div class="cc-name"><span class="cc-tag">🏷️</span>${esc(cd.title||'Note')}</div>${cd.detail?`<div class="cc-detail">${esc(cd.detail)}</div>`:''}`;
-        if(!VIEWER_MODE){cardEl.style.cursor='pointer';cardEl.addEventListener('click',e=>{e.stopPropagation();openEditCard(wi,di,ci,ki,e);});}
+        const rh=VIEWER_MODE?'':`<div class="card-resize" title="Drag to extend across days"></div>`;
+        cardEl.innerHTML=`${rm}<div class="cc-name"><span class="cc-tag">🏷️</span>${esc(cd.title||'Note')}</div>${cd.detail?`<div class="cc-detail">${esc(cd.detail)}</div>`:''}${rh}`;
+        if(!VIEWER_MODE){
+          cardEl.style.cursor='grab';
+          attachCustomCardDrag(cardEl,wi,di,ci,ki);
+          const h=cardEl.querySelector('.card-resize');
+          if(h)attachCardResize(h,wi,di,ci,ki);
+        }
         cw.appendChild(cardEl);
         cell.appendChild(cw);
       });
@@ -2478,9 +2608,18 @@ function saveCard(){
   const detail=document.getElementById('c-detail').value.trim();
   if(!title&&!detail){closeCard();return;}
   ensureCards(wi);pushUndo();
+  const gid=ji===-1?null:(S.weeks[wi].cards[ci]?.[di]?.[ji]?.gid||null);
   const entry={title,detail,color:_cardColor||CARD_DEFAULT_COLOR};
+  if(gid)entry.gid=gid;
   if(ji===-1)S.weeks[wi].cards[ci][di].push(entry);
   else S.weeks[wi].cards[ci][di][ji]=entry;
+  // Propagate edits to every card in the same day-group (same week + crew row)
+  if(gid){
+    const nd=S.weeks[wi].hasSunday?7:6;
+    for(let d=0;d<nd;d++){
+      (S.weeks[wi].cards[ci]?.[d]||[]).forEach(c=>{if(c.gid===gid){c.title=entry.title;c.detail=entry.detail;c.color=entry.color;}});
+    }
+  }
   save();render();closeCard();
 }
 function deleteCard(){const{wi,di,ci,ji}=CE;pushUndo();if(ji>=0&&S.weeks[wi].cards[ci]?.[di])S.weeks[wi].cards[ci][di].splice(ji,1);save();render();closeCard();}

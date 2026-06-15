@@ -133,6 +133,26 @@ body{background:#0d0f14;font-family:var(--font-b);font-size:13px;display:flex;fl
 .s-free    .jcard{--s-color:var(--s-free)}   .s-free    .jpill{background:rgba(45,184,122,.12);color:var(--s-free)}
 .s-standby .jcard{--s-color:var(--s-standby)}.s-standby .jpill{background:rgba(155,109,255,.12);color:var(--s-standby)}
 
+/* CUSTOM (NON-JOB) CARDS — pinned to bottom of cell, visually distinct from jobs */
+.card-wrap{position:relative;margin-top:2px}
+.card-wrap.first-card{margin-top:5px;padding-top:5px;border-top:1px dashed #d4cfc4}
+.custom-card{border-left:3px solid var(--cc-color,var(--yellow));background:#fdf6dd;padding:4px 6px 4px 8px;position:relative}
+.custom-card .cc-name{display:flex;align-items:center;gap:4px;font-family:var(--font-d);font-weight:800;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:#6b5a14;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px}
+.custom-card .cc-tag{font-size:10px;opacity:.85;flex-shrink:0}
+.custom-card .cc-detail{font-size:11px;color:#7a6a2a;line-height:1.25;white-space:pre-wrap;word-break:break-word;margin-top:1px}
+.custom-card .jremove{color:#c9b970}
+.custom-card .jremove:hover{color:var(--red)}
+body.viewer .custom-card .jremove{display:none}
+
+/* + ADD MENU POPUP */
+.addmenu{position:absolute;background:#fff;border-top:3px solid var(--yellow);box-shadow:0 8px 28px rgba(0,0,0,.4);z-index:600;min-width:150px;animation:popIn .14s ease-out;overflow:hidden}
+.addmenu button{display:block;width:100%;text-align:left;background:transparent;border:none;border-bottom:1px solid #ececec;padding:11px 16px;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--txt);cursor:pointer;transition:background .1s}
+.addmenu button:last-child{border-bottom:none}
+.addmenu button:hover{background:var(--yellow);color:#000}
+body.dark .addmenu{background:#191d28}
+body.dark .addmenu button{color:#e8eaf0;border-bottom-color:#2e3448}
+body.dark .addmenu button:hover{background:var(--yellow);color:#000}
+
 /* DRAG GHOST */
 .drag-ghost{position:fixed;pointer-events:none;z-index:9999;background:#f5f3ee;border-left:3px solid var(--blue);padding:6px 10px 6px 11px;font-family:var(--font-d);font-weight:700;font-size:13px;color:var(--txt);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:rotate(2deg) scale(1.04);box-shadow:0 8px 28px rgba(0,0,0,.5);opacity:.93}
 
@@ -306,6 +326,10 @@ body.dark .jcard{background:#252a38}
 body.dark .jcard.night{background:#191d28}
 body.dark .jname{color:#c8cad4}
 body.dark .jnote{color:#6a7080}
+body.dark .custom-card{background:#2c2a1c}
+body.dark .custom-card .cc-name{color:#f0d97a}
+body.dark .custom-card .cc-detail{color:#c4b878}
+body.dark .card-wrap.first-card{border-top-color:#3a4055}
 body.dark .cell-add{color:#3a4055}
 body.dark .cell-add:hover{color:#555c70}
 body.dark .rv-lbl{background:#1a1d26;border-color:#2e3448}
@@ -495,6 +519,9 @@ body.present-editor #pres-week-controls,body.present-viewer #pres-week-controls{
 .pres-jremove:hover{color:var(--red);background:rgba(224,82,82,.2)}
 .pres-add{flex:1;display:flex;align-items:center;justify-content:center;color:#14171f;font-size:22px;cursor:pointer;font-family:var(--font-d);font-weight:300;line-height:1;min-height:16px;transition:color .12s}
 .pres-add:hover{color:#2e3448}
+.pres-card{flex:none;border-left:9px solid var(--yellow);background:#2c2a1c;padding:6px 9px 5px 10px;overflow:hidden;position:relative;display:flex;flex-direction:column;border-radius:1px;margin-top:3px}
+.pres-card-name{font-family:var(--font-d);font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:.03em;color:#f0d97a;line-height:1.1;overflow:hidden;padding-right:12px;word-break:break-word}
+.pres-card-detail{font-size:12px;color:#c4b878;overflow:hidden;margin-top:2px;word-break:break-word;white-space:pre-wrap}
 .pres-add.has-jobs{flex:0 0 12px;font-size:10px;min-height:0;color:#14171f}
 
 /* ── SCHEDULED TO INVOICE ───────────────────────────────────────────────── */
@@ -690,6 +717,31 @@ body.viewer .week-tag{display:none!important}
   </div>
 </div>
 
+<!-- CUSTOM CARD MODAL -->
+<div class="overlay hidden" id="card-ov" onclick="ovBgClick(event,'card-ov',closeCard)">
+  <div class="modal" id="card-modal" style="width:460px">
+    <div class="mhd">
+      <div class="mhd-t" id="card-title">Card</div>
+      <button class="mclose" onclick="closeCard()">✕</button>
+    </div>
+    <div class="mbody">
+      <div><div class="flbl">Title <span class="flbl-hint">e.g. OFF, Reminder</span></div>
+        <input class="finput" id="c-title" type="text" placeholder="e.g. OFF TODAY" autocomplete="off" onkeydown="cardKey(event)">
+      </div>
+      <div><div class="flbl">Details <span class="flbl-hint">e.g. names, notes</span></div>
+        <textarea class="finput" id="c-detail" rows="3" placeholder="e.g. Mike, Sara — vacation" style="resize:vertical;font-family:var(--font-d)"></textarea>
+      </div>
+      <div><div class="flbl">Color</div>
+        <div id="c-color-swatches" style="display:flex;gap:7px;flex-wrap:wrap;padding-top:2px"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-save" onclick="saveCard()">Save</button>
+      <button class="btn-del" id="c-del-btn" onclick="deleteCard()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- JOB SUMMARY MODAL -->
 <div class="overlay hidden" id="summary-ov" onclick="ovBgClick(event,'summary-ov',closeSummary)">
   <div class="modal modal-sm" id="summary-modal" style="width:400px">
@@ -824,7 +876,7 @@ const CREW_W=58,ROSTER_W=140;
 
 // ── DATA ─────────────────────────────────────────────────────────────────
 function emptyA(nc,nd){return Array.from({length:nc},()=>Array.from({length:nd},()=>[]));} 
-function mkWeek(dates,numCrews){const nc=numCrews||5;return{dates,hasSunday:false,satRoster:[],jobSummary:{},target:0,scheduledInvoice:0,numCrews:nc,crews:null,tbs:[],a:emptyA(nc,dates.length)};}
+function mkWeek(dates,numCrews){const nc=numCrews||5;return{dates,hasSunday:false,satRoster:[],jobSummary:{},target:0,scheduledInvoice:0,numCrews:nc,crews:null,tbs:[],a:emptyA(nc,dates.length),cards:emptyA(nc,dates.length)};}
 function wkDates(mon){const p=mon.split(' ');const yr=new Date().getFullYear();const b=new Date(yr,MI[p[0]],parseInt(p[1]));return Array.from({length:6},(_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return MN[d.getMonth()]+' '+d.getDate();});}
 
 function initData(){
@@ -2067,10 +2119,28 @@ function buildPresentWeek(wi, isNext){
       if(!VIEWER_MODE){
         const add=document.createElement('div');
         add.className='pres-add'+(jobs.length?' has-jobs':'');
-        add.textContent='+';add.title='Add job';
-        add.addEventListener('click',e=>{e.stopPropagation();openEditJob(wi,di,ci,-1,e);});
+        add.textContent='+';add.title='Add job or card';
+        add.addEventListener('click',e=>{e.stopPropagation();openAddMenu(wi,di,ci,e);});
         cell.appendChild(add);
       }
+      // Custom cards (display + edit) at bottom of present cell
+      const pcards=(wk.cards&&wk.cards[ci]&&wk.cards[ci][di])||[];
+      pcards.forEach((cd,ki)=>{
+        const cardEl=document.createElement('div');
+        cardEl.className='pres-card';
+        if(cd.color)cardEl.style.borderLeftColor=cd.color;
+        cardEl.innerHTML=`<div class="pres-card-name">${esc(cd.title||'Note')}</div>${cd.detail?`<div class="pres-card-detail">${esc(cd.detail)}</div>`:''}`;
+        if(!VIEWER_MODE){
+          const rm=document.createElement('button');
+          rm.className='pres-jremove';rm.innerHTML='×';rm.title='Remove';
+          rm.addEventListener('pointerdown',e=>e.stopPropagation());
+          rm.addEventListener('click',e=>{e.stopPropagation();removeCard(e,wi,di,ci,ki);});
+          cardEl.appendChild(rm);
+          cardEl.style.cursor='pointer';
+          cardEl.addEventListener('click',e=>{e.stopPropagation();openEditCard(wi,di,ci,ki,e);});
+        }
+        cell.appendChild(cardEl);
+      });
       grid.appendChild(cell);
     }
   }
@@ -2176,8 +2246,20 @@ function buildWeek(wi,label,isNext){
       });
       const addBtn=mkEl('div','cell-add');
       addBtn.textContent='+';
-      addBtn.addEventListener('click',e=>{ if(!VIEWER_MODE) openEditJob(wi,di,ci,-1,e); });
+      addBtn.addEventListener('click',e=>{ if(!VIEWER_MODE) openAddMenu(wi,di,ci,e); });
       cell.appendChild(addBtn);
+      // Custom (non-job) cards — pinned to the bottom of the cell, distinct from jobs
+      const cards=(wk.cards&&wk.cards[ci]&&wk.cards[ci][di])||[];
+      cards.forEach((cd,ki)=>{
+        const cw=mkEl('div','card-wrap'+(ki===0?' first-card':''));
+        const cardEl=mkEl('div','custom-card');
+        if(cd.color)cardEl.style.setProperty('--cc-color',cd.color);
+        const rm=VIEWER_MODE?'':`<button class="jremove" onpointerdown="stopProp(event)" onclick="removeCard(event,${wi},${di},${ci},${ki})">×</button>`;
+        cardEl.innerHTML=`${rm}<div class="cc-name"><span class="cc-tag">🏷️</span>${esc(cd.title||'Note')}</div>${cd.detail?`<div class="cc-detail">${esc(cd.detail)}</div>`:''}`;
+        if(!VIEWER_MODE){cardEl.style.cursor='pointer';cardEl.addEventListener('click',e=>{e.stopPropagation();openEditCard(wi,di,ci,ki,e);});}
+        cw.appendChild(cardEl);
+        cell.appendChild(cw);
+      });
       grid.appendChild(cell);
     }
     if(!isMobile){
@@ -2345,6 +2427,76 @@ function saveJob(){
 function deleteJob(){const{wi,di,ci,ji}=AE;pushUndo();if(ji>=0)S.weeks[wi].a[ci][di].splice(ji,1);save();render();closeEdit();}
 function removeJob(e,wi,di,ci,ji){e.stopPropagation();pushUndo();S.weeks[wi].a[ci][di].splice(ji,1);save();render();}
 function stopProp(e){e.stopPropagation();}
+
+// ── ADD MENU (Job vs Custom Card) ─────────────────────────────────────────
+let _addMenuEl=null;
+function _addMenuOutside(e){if(_addMenuEl&&!_addMenuEl.contains(e.target))closeAddMenu();}
+function closeAddMenu(){if(_addMenuEl){_addMenuEl.remove();_addMenuEl=null;document.removeEventListener('pointerdown',_addMenuOutside,true);window.removeEventListener('scroll',closeAddMenu,true);}}
+function openAddMenu(wi,di,ci,e){
+  e&&e.stopPropagation();
+  closeAddMenu();
+  const m=document.createElement('div');m.className='addmenu';
+  const bJob=document.createElement('button');bJob.textContent='+ New Job';
+  bJob.onclick=ev=>{ev.stopPropagation();closeAddMenu();openEditJob(wi,di,ci,-1,ev);};
+  const bCard=document.createElement('button');bCard.textContent='+ New Card';
+  bCard.onclick=ev=>{ev.stopPropagation();closeAddMenu();openEditCard(wi,di,ci,-1,ev);};
+  m.appendChild(bJob);m.appendChild(bCard);
+  document.body.appendChild(m);
+  const mw=m.offsetWidth||150,mh=m.offsetHeight||90;
+  let x=e?e.clientX:100,y=e?e.clientY:100;
+  if(x+mw>window.innerWidth-8)x=window.innerWidth-mw-8;
+  if(y+mh>window.innerHeight-8)y=window.innerHeight-mh-8;
+  m.style.left=Math.max(8,x)+window.scrollX+'px';
+  m.style.top=Math.max(8,y)+window.scrollY+'px';
+  _addMenuEl=m;
+  setTimeout(()=>{document.addEventListener('pointerdown',_addMenuOutside,true);window.addEventListener('scroll',closeAddMenu,true);},0);
+}
+
+// ── CUSTOM CARD MODAL ─────────────────────────────────────────────────────
+let CE=null,_cardColor=null;
+const CARD_DEFAULT_COLOR='#f5c842';
+function openEditCard(wi,di,ci,ji,e){
+  CE={wi,di,ci,ji};
+  ensureCards(wi);
+  const wk=S.weeks[wi];
+  const isNew=ji===-1;
+  const card=isNew?null:(wk.cards[ci]?.[di]?.[ji]||null);
+  document.getElementById('card-title').textContent=`C${ci+1} · ${DAY_NAMES[di]} ${wk.dates[di]}${isNew?' — New Card':''}`;
+  document.getElementById('c-title').value=card?.title||'';
+  document.getElementById('c-detail').value=card?.detail||'';
+  buildCardSwatches(card?(card.color||CARD_DEFAULT_COLOR):CARD_DEFAULT_COLOR);
+  document.getElementById('c-del-btn').style.display=isNew?'none':'';
+  document.getElementById('card-ov').classList.remove('hidden');
+  positionModal(document.getElementById('card-modal'),e);
+  setTimeout(()=>document.getElementById('c-title').focus(),50);
+}
+function closeCard(){document.getElementById('card-ov').classList.add('hidden');}
+function cardKey(e){if(e.key==='Enter'&&e.target.tagName==='INPUT')saveCard();if(e.key==='Escape')closeCard();}
+function saveCard(){
+  const{wi,di,ci,ji}=CE;
+  const title=document.getElementById('c-title').value.trim();
+  const detail=document.getElementById('c-detail').value.trim();
+  if(!title&&!detail){closeCard();return;}
+  ensureCards(wi);pushUndo();
+  const entry={title,detail,color:_cardColor||CARD_DEFAULT_COLOR};
+  if(ji===-1)S.weeks[wi].cards[ci][di].push(entry);
+  else S.weeks[wi].cards[ci][di][ji]=entry;
+  save();render();closeCard();
+}
+function deleteCard(){const{wi,di,ci,ji}=CE;pushUndo();if(ji>=0&&S.weeks[wi].cards[ci]?.[di])S.weeks[wi].cards[ci][di].splice(ji,1);save();render();closeCard();}
+function removeCard(e,wi,di,ci,ji){e.stopPropagation();pushUndo();if(S.weeks[wi].cards[ci]?.[di])S.weeks[wi].cards[ci][di].splice(ji,1);save();render();}
+function buildCardSwatches(currentColor){
+  _cardColor=currentColor||CARD_DEFAULT_COLOR;
+  const container=document.getElementById('c-color-swatches');
+  container.innerHTML='';
+  JOB_COLORS.forEach(c=>{
+    const sw=document.createElement('div');
+    sw.className='cswatch'+(c===_cardColor?' selected':'');
+    sw.style.background=c;sw.title=c;
+    sw.onclick=()=>{_cardColor=c;buildCardSwatches(c);};
+    container.appendChild(sw);
+  });
+}
 
 // ── JOB SUMMARY MODAL ────────────────────────────────────────────────────
 const JOB_COLORS=['#e05252','#e07b2b','#f5c842','#2db87a','#4a9eff','#9b6dff','#e05299','#5ecfcf','#1a9e8f','#a0522d','#607d8b','#8b6914'];
@@ -2669,7 +2821,8 @@ function updateNav(){
 }
 
 // ── ENSURE DIMS ───────────────────────────────────────────────────────────
-function ensureA(wi){const wk=S.weeks[wi],nd=wk.hasSunday?7:6,nc=getWeekNumCrews(wi);while(wk.a.length<nc)wk.a.push(Array.from({length:nd},()=>[]));wk.a=wk.a.slice(0,nc);for(let ci=0;ci<wk.a.length;ci++){let cr=wk.a[ci]||[];while(cr.length<nd)cr.push([]);wk.a[ci]=cr.slice(0,nd);for(let di=0;di<nd;di++){if(!Array.isArray(wk.a[ci][di]))wk.a[ci][di]=wk.a[ci][di]?[wk.a[ci][di]]:[];}}}
+function ensureA(wi){const wk=S.weeks[wi],nd=wk.hasSunday?7:6,nc=getWeekNumCrews(wi);while(wk.a.length<nc)wk.a.push(Array.from({length:nd},()=>[]));wk.a=wk.a.slice(0,nc);for(let ci=0;ci<wk.a.length;ci++){let cr=wk.a[ci]||[];while(cr.length<nd)cr.push([]);wk.a[ci]=cr.slice(0,nd);for(let di=0;di<nd;di++){if(!Array.isArray(wk.a[ci][di]))wk.a[ci][di]=wk.a[ci][di]?[wk.a[ci][di]]:[];}}ensureCards(wi);}
+function ensureCards(wi){const wk=S.weeks[wi],nd=wk.hasSunday?7:6,nc=getWeekNumCrews(wi);if(!Array.isArray(wk.cards))wk.cards=[];while(wk.cards.length<nc)wk.cards.push(Array.from({length:nd},()=>[]));wk.cards=wk.cards.slice(0,nc);for(let ci=0;ci<wk.cards.length;ci++){let cr=wk.cards[ci]||[];while(cr.length<nd)cr.push([]);wk.cards[ci]=cr.slice(0,nd);for(let di=0;di<nd;di++){if(!Array.isArray(wk.cards[ci][di]))wk.cards[ci][di]=[];}}}
 
 // ── SETTINGS POP ──────────────────────────────────────────────────────────
 function toggleSettings(){document.getElementById('settings-pop').classList.toggle('open');document.getElementById('settings-btn').classList.toggle('active-pop');}
